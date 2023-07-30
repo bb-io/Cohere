@@ -1,0 +1,10 @@
+﻿using Apps.Cohere.Dtos;
+using Blackbird.Applications.Sdk.Common;
+
+namespace Apps.Cohere.Models.Responses;
+
+public class RerankTextsResponse
+{
+    [Display("Reranked texts")]
+    public IEnumerable<RerankedTextDto> Results { get; set; }
+}

@@ -1,0 +1,31 @@
+﻿using Blackbird.Applications.Sdk.Common;
+
+namespace Apps.Cohere.Models.Requests;
+
+public class GenerateTextRequest
+{
+    public string Prompt { get; set; }
+    
+    [Display("Maximum number of words")]
+    public int MaximumWordsNumber { get; set; }
+    
+    public string? Model { get; set; }
+    
+    [Display("Temperature (from 0.0 to 5.0)")]
+    public float? Temperature { get; set; }
+    
+    [Display("Top-k (from 0 to 500)")]
+    public int? TopK { get; set; }
+    
+    [Display("Top-p (from 0.0 to 1.0)")]
+    public float? TopP { get; set; }
+    
+    [Display("Frequency penalty (from 0.0 to 1.0)")]
+    public float? FrequencyPenalty { get; set; }
+    
+    [Display("Presence penalty (from 0.0 to 1.0)")]
+    public float? PresencePenalty { get; set; }
+    
+    [Display("Stop sequences")]
+    public IEnumerable<string>? StopSequences { get; set; }
+}
