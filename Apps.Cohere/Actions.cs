@@ -1,8 +1,10 @@
-﻿using Apps.Cohere.Models.Requests;
+﻿using Apps.Cohere.Dtos;
+using Apps.Cohere.Models.Requests;
 using Apps.Cohere.Models.Responses;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
+using MathNet.Numerics.LinearAlgebra;
 using RestSharp;
 
 namespace Apps.Cohere;
@@ -79,28 +81,41 @@ public class Actions
         var generations = await client.ExecuteWithHandling<GenerateTextResponseWrapper>(request);
         return generations.Generations.First();
     }
-    
-    [Action("Generate embedding", Description = "Generate text embedding. An embedding is a list of floating point " +
-                                                "numbers that captures semantic information about the text that it " +
-                                                "represents.")]
-    public async Task<GenerateEmbeddingsResponse> GenerateEmbeddings(
+
+    [Action("Calculate similarity of two texts", Description = "Calculate the similarity of texts provided. The result " +
+                                                               "of this action is a percentage similarity score. The " +
+                                                               "higher the score, the more similar the texts are.")]
+    public async Task<CalculateTextsSimilarityResponse> CalculateTextsSimilarity(
         IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
-        [ActionParameter] GenerateEmbeddingsRequest input)
+        [ActionParameter] CalculateTextsSimilarityRequest input)
     {
+        double CalculateSimilarityScore(Vector<double> firstTextEmbedding, Vector<double> secondTextEmbedding)
+        {
+            var embeddingsDotProduct = firstTextEmbedding.DotProduct(secondTextEmbedding);
+            var firstTextEmbeddingNorm = firstTextEmbedding.L2Norm();
+            var secondTextEmbeddingNorm = secondTextEmbedding.L2Norm();
+            var similarityScore = embeddingsDotProduct / (firstTextEmbeddingNorm * secondTextEmbeddingNorm);
+            return similarityScore;
+        }
+        
         var model = input.Model ?? "embed-english-v2.0";
         if (!EmbedModels.Contains(model))
             throw new Exception($"Not a valid model provided. Please provide either of: {String.Join(", ", EmbedModels)}");
-        
+
         var client = new CohereClient();
         var request = new CohereRequest("/embed", Method.Post, authenticationCredentialsProviders);
         request.AddJsonBody(new
         {
-            Texts = new[] { input.Text },
+            Texts = new[] { input.FirstText, input.SecondText },
             Model = model
         });
         
-        var embeddings = await client.ExecuteWithHandling<GenerateEmbeddingsResponseWrapper>(request);
-        return new GenerateEmbeddingsResponse { Embedding = embeddings.Embeddings.First() };
+        var embeddings = await client.ExecuteWithHandling<EmbeddingsDto>(request);
+        var firstTextEmbedding = Vector<double>.Build.DenseOfArray(embeddings.Embeddings[0]);
+        var secondTextEmbedding = Vector<double>.Build.DenseOfArray(embeddings.Embeddings[1]);
+        var similarityScore = CalculateSimilarityScore(firstTextEmbedding, secondTextEmbedding);
+        var similarityScoreInPercents = Math.Round((decimal)similarityScore * 100, 2);
+        return new CalculateTextsSimilarityResponse { SimilarityScore = similarityScoreInPercents };
     }
     
     [Action("Classify text", Description = "Classify text input. This action requires examples and their corresponding " +
