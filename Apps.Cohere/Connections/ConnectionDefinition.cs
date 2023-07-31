@@ -14,14 +14,14 @@ public class ConnectionDefinition : IConnectionDefinition
             ConnectionUsage = ConnectionUsage.Actions,
             ConnectionProperties = new List<ConnectionProperty>
             {
-                new("apiKey")
+                new("API key")
             }
         }
     };
 
     public IEnumerable<AuthenticationCredentialsProvider> CreateAuthorizationCredentialsProviders(Dictionary<string, string> values)
     {
-        var token = values.First(v => v.Key == "apiKey");
+        var token = values.First(v => v.Key == "API key");
         yield return new AuthenticationCredentialsProvider(
             AuthenticationCredentialsRequestLocation.None,
             "Authorization",
