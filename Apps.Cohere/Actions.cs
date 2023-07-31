@@ -97,6 +97,36 @@ public class Actions
         var extractions = await client.ExecuteWithHandling<ExtractEntityFromTextResponseWrapper>(request);
         return extractions.Generations.First();
     }
+    
+    [Action("Edit text", Description = "Edit the input text given an instruction prompt (e.g. make it more concise or " +
+                                       "make it more friendly).")]
+    public async Task<EditTextResponse> EditText(
+        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
+        [ActionParameter] EditTextRequest input)
+    {
+        var model = input.Model ?? "command";
+        if (!GenerateTextModels.Contains(model))
+            throw new Exception($"Not a valid model provided. Please provide either of: {String.Join(", ", GenerateTextModels)}");
+        
+        var client = new CohereClient();
+        var request = new CohereRequest("/generate", Method.Post, authenticationCredentialsProviders);
+        var maximumTokensNumber = input.MaximumWordsNumber * 3;
+        request.AddJsonBody(new
+        {
+            Prompt = $"Edit the following text to {input.Instruction}: {input.Text}",
+            Model = model,
+            Max_tokens = maximumTokensNumber,
+            Temperature = input.Temperature ?? 0.75,
+            K = input.TopK ?? 0,
+            P = input.TopP ?? 0.75,
+            Frequency_penalty = input.FrequencyPenalty ?? 0.0,
+            Presence_penalty = input.PresencePenalty ?? 0.0,
+            Stop_sequences = input.StopSequences
+        });
+
+        var generations = await client.ExecuteWithHandling<EditTextResponseWrapper>(request);
+        return generations.Generations.First();
+    }
 
     [Action("Calculate similarity of two texts", Description = "Calculate the similarity of texts provided. The result " +
                                                                "of this action is a percentage similarity score. The " +
