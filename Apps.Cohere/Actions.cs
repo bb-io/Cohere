@@ -72,6 +72,31 @@ public class Actions
         var generations = await client.ExecuteWithHandling<GenerateTextResponseWrapper>(request);
         return generations.Generations.First();
     }
+    
+    [Action("Extract entity from text", Description = "Extract a piece of information from text. Provide entity that " +
+                                                      "you want to extract from a text (e.g. product title).")]
+    public async Task<ExtractEntityFromTextResponse> ExtractEntityFromText(
+        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
+        [ActionParameter] ExtractEntityFromTextRequest input)
+    {
+        var model = input.Model ?? "command";
+        if (!GenerateTextModels.Contains(model))
+            throw new Exception($"Not a valid model provided. Please provide either of: {String.Join(", ", GenerateTextModels)}");
+        
+        var client = new CohereClient();
+        var request = new CohereRequest("/generate", Method.Post, authenticationCredentialsProviders);
+        var maximumTokensNumber = (input.MaximumWordsNumber ?? 10) * 3;
+        request.AddJsonBody(new
+        {
+            Prompt = $"Extract {input.Entity} from the text: {input.Text}",
+            Model = model,
+            Max_tokens = maximumTokensNumber,
+            Temperature = input.Temperature ?? 0.75
+        });
+        
+        var extractions = await client.ExecuteWithHandling<ExtractEntityFromTextResponseWrapper>(request);
+        return extractions.Generations.First();
+    }
 
     [Action("Calculate similarity of two texts", Description = "Calculate the similarity of texts provided. The result " +
                                                                "of this action is a percentage similarity score. The " +
