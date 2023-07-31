@@ -146,14 +146,14 @@ public class Actions
         IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
         [ActionParameter] ClassifyTextWithFileExamplesRequest input)
     {
-        IEnumerable<ClassificationExamplesCsvFileItemDto> ParseCsvFile(byte[] csvFile)
+        IEnumerable<ClassificationExampleDto> GetExamplesFromCsvFile(byte[] csvFile)
         {
             using (var stream = new MemoryStream(csvFile))
             using (var reader = new StreamReader(stream))
             using (var csvReader = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture) { HasHeaderRecord = false }))
             {
-                var records = csvReader.GetRecords<ClassificationExamplesCsvFileItemDto>().ToList();
-                return records;
+                var examples = csvReader.GetRecords<ClassificationExampleDto>().ToList();
+                return examples;
             }
         }
         
@@ -170,7 +170,7 @@ public class Actions
         request.AddJsonBody(new
         {
             Inputs = new[] { input.Text },
-            Examples = ParseCsvFile(input.CsvFileWithExamples).Select(item => new { text = item.Text, label = item.Label }),
+            Examples = GetExamplesFromCsvFile(input.CsvFileWithExamples).Select(item => new { text = item.Text, label = item.Label }),
             Model = model
         });
         

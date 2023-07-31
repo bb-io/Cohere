@@ -2,7 +2,7 @@
 
 namespace Apps.Cohere.Dtos;
 
-public class ClassificationExamplesCsvFileItemDto
+public class ClassificationExampleDto
 {
     [Index(0)]
     public string Text { get; set; }
