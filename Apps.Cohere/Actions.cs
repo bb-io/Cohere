@@ -319,6 +319,7 @@ public class Actions
             Query = input.Query,
             Documents = input.Texts,
             Model = model,
+            Top_n = input.TopN ?? input.Texts.Count(),
             Return_documents = true
         });
         
@@ -338,7 +339,7 @@ public class Actions
         IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
         [ActionParameter] RerankTextsProvidedInFileRequest input)
     {
-        async Task<IEnumerable<string>> GetDocumentsFromFile(byte[] file)
+        async Task<List<string>> GetDocumentsFromFile(byte[] file)
         {
             var documents = new List<string>();
             using (var stream = new MemoryStream(file))
@@ -373,6 +374,7 @@ public class Actions
             Query = input.Query,
             Documents = documents,
             Model = model,
+            Top_n = input.TopN ?? documents.Count,
             Return_documents = true
         });
         
