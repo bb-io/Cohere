@@ -250,4 +250,58 @@ public class Actions
 
         return rerankedTexts;
     }
+    
+    [Action("Rerank texts provided in a file", Description = "This action takes in a query and a txt file with list " +
+                                                             "of texts and produces an ordered list with each text " +
+                                                             "assigned a relevance score. Each text in the file must " +
+                                                             "start on a new line.")]
+    public async Task<RerankTextsResponse> RerankTextsProvidedInFile(
+        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
+        [ActionParameter] RerankTextsProvidedInFileRequest input)
+    {
+        async Task<IEnumerable<string>> GetDocumentsFromFile(byte[] file)
+        {
+            var documents = new List<string>();
+            using (var stream = new MemoryStream(file))
+            using (var reader = new StreamReader(stream))
+            {
+                while (!reader.EndOfStream)
+                {
+                    var line = await reader.ReadLineAsync();
+                    documents.Add(line);
+                }
+            }
+
+            return documents;
+        }
+
+        var model = input.Model ?? "rerank-multilingual-v2.0";
+        if (!RerankModels.Contains(model))
+            throw new Exception($"Not a valid model provided. Please provide either of: {String.Join(", ", RerankModels)}");
+
+        if (input.MinimumRelevanceScore != null && (input.MinimumRelevanceScore < 0 || input.MinimumRelevanceScore > 1))
+            throw new Exception("Value of minimum relevance score parameter must be in range from 0.0 to 1.0");
+        
+        var fileExtension = input.Filename.Split(".")[^1];
+        if (fileExtension != "txt")
+            throw new Exception("Please provide txt file");
+        
+        var client = new CohereClient();
+        var request = new CohereRequest("/rerank", Method.Post, authenticationCredentialsProviders);
+        var documents = await GetDocumentsFromFile(input.TxtFileWithTexts);
+        request.AddJsonBody(new
+        {
+            Query = input.Query,
+            Documents = documents,
+            Model = model,
+            Return_documents = true
+        });
+        
+        var rerankedTexts = await client.ExecuteWithHandling<RerankTextsResponse>(request);
+
+        if (input.MinimumRelevanceScore != null)
+            rerankedTexts.Results = rerankedTexts.Results.Where(t => t.RelevanceScore >= input.MinimumRelevanceScore);
+
+        return rerankedTexts;
+    }
 }
