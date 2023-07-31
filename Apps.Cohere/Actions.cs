@@ -31,19 +31,7 @@ public class Actions
         "embed-multilingual-v2.0",
         "embed-english-v2.0"
     };
-    
-    private static readonly List<string> TokenizeModels = new() 
-    { 
-        "base", 
-        "base-light", 
-        "command", 
-        "command-light", 
-        "command-light-nightly", 
-        "command-nightly",
-        "summarize-medium",
-        "summarize-xlarge"
-    };
-    
+
     private static readonly List<string> SummarizeModels = new()
     {
         "summarize-medium",
@@ -189,51 +177,7 @@ public class Actions
         var classifications = await client.ExecuteWithHandling<ClassifyTextsResponseWrapper>(request);
         return classifications.Classifications.First();
     }
-    
-    [Action("Tokenize text", Description = "Tokenize text. Specify model to ensure that the tokenization uses the " +
-                                           "tokenizer used by specific model.")]
-    public async Task<TokenizeTextResponse> TokenizeText(
-        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
-        [ActionParameter] TokenizeTextRequest input)
-    {
-        var model = input.Model ?? "command";
-        if (!TokenizeModels.Contains(model))
-            throw new Exception($"Not a valid model provided. Please provide either of: {String.Join(", ", TokenizeModels)}");
-        
-        var client = new CohereClient();
-        var request = new CohereRequest("/tokenize", Method.Post, authenticationCredentialsProviders);
-        request.AddJsonBody(new
-        {
-            Text = input.Text,
-            Model = model
-        });
-        
-        var tokens = await client.ExecuteWithHandling<TokenizeTextResponse>(request);
-        return tokens;
-    }
-    
-    [Action("Detokenize tokens", Description = "Detokenize tokens. Specify model to ensure that the detokenization is " +
-                                               "done by the tokenizer used by specific model.")]
-    public async Task<DetokenizeTokensResponse> DetokenizeTokens(
-        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
-        [ActionParameter] DetokenizeTokensRequest input)
-    {
-        var model = input.Model ?? "command";
-        if (!TokenizeModels.Contains(model))
-            throw new Exception($"Not a valid model provided. Please provide either of: {String.Join(", ", TokenizeModels)}");
-        
-        var client = new CohereClient();
-        var request = new CohereRequest("/detokenize", Method.Post, authenticationCredentialsProviders);
-        request.AddJsonBody(new
-        {
-            Tokens = input.Tokens,
-            Model = model
-        });
-        
-        var text = await client.ExecuteWithHandling<DetokenizeTokensResponse>(request);
-        return text;
-    }
-    
+
     [Action("Detect language", Description = "Detect the language of text provided.")]
     public async Task<DetectLanguageResponse> DetectLanguage(
         IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
