@@ -24,7 +24,7 @@ public class Actions
         "command-light-nightly", 
         "command-nightly"
     };
-
+    
     private static readonly List<string> EmbedModels = new()
     {
         "embed-english-light-v2.0",
@@ -43,7 +43,7 @@ public class Actions
         "rerank-english-v2.0",
         "rerank-multilingual-v2.0"
     };
-    
+
     [Action("Generate text", Description = "Generate realistic text conditioned on a given input.")]
     public async Task<GenerateTextResponse> GenerateText(
         IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
@@ -127,6 +127,30 @@ public class Actions
         var generations = await client.ExecuteWithHandling<EditTextResponseWrapper>(request);
         return generations.Generations.First();
     }
+    
+    [Action("Perform grammar and spelling check", Description = "Perform a grammar and spelling check of the text provided.")]
+    public async Task<PerformGrammarAndSpellingCheckResponse> PerformGrammarAndSpellingCheck(
+        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
+        [ActionParameter] PerformGrammarAndSpellingCheckRequest input)
+    {
+        var model = input.Model ?? "command-nightly";
+        if (!GenerateTextModels.Contains(model))
+            throw new Exception($"Not a valid model provided. Please provide either of: {String.Join(", ", GenerateTextModels)}");
+        
+        var client = new CohereClient();
+        var request = new CohereRequest("/generate", Method.Post, authenticationCredentialsProviders);
+        var maximumTokensNumber = input.Text.Length * 3;
+        request.AddJsonBody(new
+        {
+            Prompt = $"Perform a grammar and spelling check of the text provided and respond with the corrected text: {input.Text}",
+            Model = model,
+            Max_tokens = maximumTokensNumber,
+            Temperature = 0.1
+        });
+
+        var generations = await client.ExecuteWithHandling<PerformGrammarAndSpellingCheckResponseWrapper>(request);
+        return generations.Generations.First();
+    }
 
     [Action("Calculate similarity of two texts", Description = "Calculate the similarity of texts provided. The result " +
                                                                "of this action is a percentage similarity score. The " +
@@ -163,7 +187,7 @@ public class Actions
         var similarityScoreInPercents = Math.Round((decimal)similarityScore * 100, 2);
         return new CalculateTextsSimilarityResponse { SimilarityScore = similarityScoreInPercents };
     }
-    
+
     [Action("Classify text", Description = "Classify text input. This action requires examples and their corresponding " +
                                            "labels to be specified. Each unique label requires at least two examples " +
                                            "associated with it.")]
