@@ -1,9 +1,12 @@
-﻿using Apps.Cohere.Dtos;
+﻿using System.Globalization;
+using Apps.Cohere.Dtos;
 using Apps.Cohere.Models.Requests;
 using Apps.Cohere.Models.Responses;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
+using CsvHelper;
+using CsvHelper.Configuration;
 using MathNet.Numerics.LinearAlgebra;
 using RestSharp;
 
@@ -139,6 +142,47 @@ public class Actions
         {
             Inputs = new[] { input.Text },
             Examples = input.ExampleTexts.Zip(input.ExampleLabels, (text, label) => new { text, label }),
+            Model = model
+        });
+        
+        var classifications = await client.ExecuteWithHandling<ClassifyTextsResponseWrapper>(request);
+        return classifications.Classifications.First();
+    }
+    
+    [Action("Classify text with examples as a file", Description = "Classify text input. This action requires a csv " +
+                                                                   "file with examples and their corresponding labels. " +
+                                                                   "Each file's line should have the form 'example, " +
+                                                                   "label'. Each unique label requires at least two " +
+                                                                   "examples associated with it.")]
+    public async Task<ClassifyTextsResponse> ClassifyTextWithFileExamples(
+        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
+        [ActionParameter] ClassifyTextWithFileExamplesRequest input)
+    {
+        IEnumerable<ClassificationExamplesCsvFileItemDto> ParseCsvFile(byte[] csvFile)
+        {
+            using (var stream = new MemoryStream(csvFile))
+            using (var reader = new StreamReader(stream))
+            using (var csvReader = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture) { HasHeaderRecord = false }))
+            {
+                var records = csvReader.GetRecords<ClassificationExamplesCsvFileItemDto>().ToList();
+                return records;
+            }
+        }
+        
+        var model = input.Model ?? "embed-english-v2.0";
+        if (!EmbedModels.Contains(model))
+            throw new Exception($"Not a valid model provided. Please provide either of: {String.Join(", ", EmbedModels)}");
+
+        var fileExtension = input.Filename.Split(".")[^1];
+        if (fileExtension != "csv")
+            throw new Exception("Please provide csv file");
+
+        var client = new CohereClient();
+        var request = new CohereRequest("/classify", Method.Post, authenticationCredentialsProviders);
+        request.AddJsonBody(new
+        {
+            Inputs = new[] { input.Text },
+            Examples = ParseCsvFile(input.CsvFileWithExamples).Select(item => new { text = item.Text, label = item.Label }),
             Model = model
         });
         
