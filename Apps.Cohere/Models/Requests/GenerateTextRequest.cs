@@ -6,8 +6,8 @@ public class GenerateTextRequest
 {
     public string Prompt { get; set; }
     
-    [Display("Maximum number of words")]
-    public int MaximumWordsNumber { get; set; }
+    [Display("Maximum number of tokens")]
+    public int MaximumTokensNumber { get; set; }
     
     public string? Model { get; set; }
     

@@ -55,12 +55,11 @@ public class Actions
         
         var client = new CohereClient();
         var request = new CohereRequest("/generate", Method.Post, authenticationCredentialsProviders);
-        var maximumTokensNumber = input.MaximumWordsNumber * 3;
         request.AddJsonBody(new
         {
             Prompt = input.Prompt,
             Model = model,
-            Max_tokens = maximumTokensNumber,
+            Max_tokens = input.MaximumTokensNumber,
             Temperature = input.Temperature ?? 0.75,
             K = input.TopK ?? 0,
             P = input.TopP ?? 0.75,
@@ -85,12 +84,11 @@ public class Actions
         
         var client = new CohereClient();
         var request = new CohereRequest("/generate", Method.Post, authenticationCredentialsProviders);
-        var maximumTokensNumber = (input.MaximumWordsNumber ?? 10) * 3;
         request.AddJsonBody(new
         {
             Prompt = $"Extract {input.Entity} from the text: {input.Text}",
             Model = model,
-            Max_tokens = maximumTokensNumber,
+            Max_tokens = input.MaximumTokensNumber ?? 100,
             Temperature = input.Temperature ?? 0.75
         });
         
@@ -110,12 +108,11 @@ public class Actions
         
         var client = new CohereClient();
         var request = new CohereRequest("/generate", Method.Post, authenticationCredentialsProviders);
-        var maximumTokensNumber = input.MaximumWordsNumber * 3;
         request.AddJsonBody(new
         {
             Prompt = $"Edit the following text to {input.Instruction}: {input.Text}",
             Model = model,
-            Max_tokens = maximumTokensNumber,
+            Max_tokens = input.MaximumTokensNumber,
             Temperature = input.Temperature ?? 0.75,
             K = input.TopK ?? 0,
             P = input.TopP ?? 0.75,
@@ -133,13 +130,25 @@ public class Actions
         IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
         [ActionParameter] PerformGrammarAndSpellingCheckRequest input)
     {
+        async Task<int> GetTokensNumber(CohereClient client, string text, string model)
+        {
+            var request = new CohereRequest("/tokenize", Method.Post, authenticationCredentialsProviders);
+            request.AddJsonBody(new
+            {
+                Text = text,
+                Model = model
+            });
+            var tokens = await client.ExecuteWithHandling<TokensDto>(request);
+            return tokens.Tokens.Length;
+        }
+        
         var model = input.Model ?? "command-nightly";
         if (!GenerateTextModels.Contains(model))
             throw new Exception($"Not a valid model provided. Please provide either of: {String.Join(", ", GenerateTextModels)}");
         
         var client = new CohereClient();
         var request = new CohereRequest("/generate", Method.Post, authenticationCredentialsProviders);
-        var maximumTokensNumber = input.Text.Length * 3;
+        var maximumTokensNumber = await GetTokensNumber(client, input.Text, model) + 20;
         request.AddJsonBody(new
         {
             Prompt = $"Perform a grammar and spelling check of the text provided and respond with the corrected text: {input.Text}",
