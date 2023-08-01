@@ -12,3 +12,8 @@ public class RerankedTextDto
     [JsonProperty("relevance_score")]
     public float RelevanceScore { get; set; }
 }
+
+public class RerankedTextDtoWrapper
+{
+    public IEnumerable<RerankedTextDto> Results { get; set; }
+}

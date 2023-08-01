@@ -6,5 +6,5 @@ namespace Apps.Cohere.Models.Responses;
 public class RerankTextsResponse
 {
     [Display("Reranked texts")]
-    public IEnumerable<RerankedTextDto> Results { get; set; }
+    public string RerankedTexts { get; set; }
 }

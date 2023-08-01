@@ -332,18 +332,18 @@ public class Actions
             Return_documents = true
         });
         
-        var rerankedTexts = await client.ExecuteWithHandling<RerankTextsResponse>(request);
+        var rerankedTexts = await client.ExecuteWithHandling<RerankedTextDtoWrapper>(request);
 
         if (input.MinimumRelevanceScore != null)
             rerankedTexts.Results = rerankedTexts.Results.Where(t => t.RelevanceScore >= input.MinimumRelevanceScore);
 
-        return rerankedTexts;
+        var resultText = string.Join("\n", rerankedTexts.Results.Select(r => r.Text));
+        return new RerankTextsResponse { RerankedTexts = resultText };
     }
     
     [Action("Rerank texts provided in a file", Description = "This action takes in a query and a txt file with list " +
-                                                             "of texts and produces an ordered list with each text " +
-                                                             "assigned a relevance score. Each text in the file must " +
-                                                             "start on a new line.")]
+                                                             "of texts and produces a text combined from most relevant " +
+                                                             "texts. Each text in the file must start on a new line.")]
     public async Task<RerankTextsResponse> RerankTextsProvidedInFile(
         IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
         [ActionParameter] RerankTextsProvidedInFileRequest input)
@@ -383,15 +383,16 @@ public class Actions
             Query = input.Query,
             Documents = documents,
             Model = model,
-            Top_n = input.TopN ?? documents.Count,
+            Top_n = input.TopN,
             Return_documents = true
         });
         
-        var rerankedTexts = await client.ExecuteWithHandling<RerankTextsResponse>(request);
+        var rerankedTexts = await client.ExecuteWithHandling<RerankedTextDtoWrapper>(request);
 
         if (input.MinimumRelevanceScore != null)
             rerankedTexts.Results = rerankedTexts.Results.Where(t => t.RelevanceScore >= input.MinimumRelevanceScore);
 
-        return rerankedTexts;
+        var resultText = string.Join("\n", rerankedTexts.Results.Select(r => r.Text));
+        return new RerankTextsResponse { RerankedTexts = resultText };
     }
 }
