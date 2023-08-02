@@ -161,6 +161,90 @@ public class Actions
         return generations.Generations.First();
     }
 
+    [Action("Analyze text", Description = "Analyze text to retrieve information about its style, mood and tone.")]
+    public async Task<AnalyzeTextResponse> AnalyzeText(
+        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
+        [ActionParameter] AnalyzeTextRequest input)
+    {
+        var model = input.Model ?? "command-nightly";
+        if (!GenerateTextModels.Contains(model))
+            throw new Exception($"Not a valid model provided. Please provide either of: {String.Join(", ", GenerateTextModels)}");
+
+        var prompt = "Extract style, mood and tone of the following text. Respond with style, mood and tone detected " +
+                     "in the text in the following way: Style: {style description}, mood: {mood description}, " +
+                     $"tone: {{tone description}}. Text: {input.Text}";
+        
+        var client = new CohereClient();
+        var request = new CohereRequest("/generate", Method.Post, authenticationCredentialsProviders);
+        request.AddJsonBody(new
+        {
+            Prompt = prompt,
+            Model = model,
+            Max_tokens = 100,
+            Temperature = 0.1
+        });
+        
+        var generations = await client.ExecuteWithHandling<AnalyzeTextResponseWrapper>(request);
+        return generations.Generations.First();
+    }
+    
+    [Action("Summarise text analyses", Description = "Summarise information about styles, moods and tones of different " +
+                                                     "texts to find common patterns in styles, moods and tones.")]
+    public async Task<SummariseTextAnalysesResponse> SummariseTextAnalyses(
+        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
+        [ActionParameter] SummariseTextAnalysesRequest input)
+    {
+        var model = input.Model ?? "command";
+        if (!GenerateTextModels.Contains(model))
+            throw new Exception($"Not a valid model provided. Please provide either of: {String.Join(", ", GenerateTextModels)}");
+
+        var analyses = string.Join("\n", input.TextAnalyses);
+        var prompt = "Analyse the following text with information about styles, moods and tones of different texts and " +
+                     "find common patterns in styles, moods and tones. Respond with styles, moods and tones common " +
+                     "patterns description in the following way: Styles: {styles description}, moods: {moods description}, " +
+                     $"tones: {{tones description}}. Text: {analyses}";
+        
+        var client = new CohereClient();
+        var request = new CohereRequest("/generate", Method.Post, authenticationCredentialsProviders);
+        request.AddJsonBody(new
+        {
+            Prompt = prompt,
+            Model = model,
+            Max_tokens = 150,
+            Temperature = 0.1
+        });
+        
+        var generations = await client.ExecuteWithHandling<SummariseTextAnalysesResponseWrapper>(request);
+        return generations.Generations.First();
+    }
+    
+    [Action("Reshape text", Description = "Reshape the text. Provide the information about target style, mood and tone.")]
+    public async Task<ReshapeTextResponse> ReshapeText(
+        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
+        [ActionParameter] ReshapeTextRequest input)
+    {
+        var model = input.Model ?? "command";
+        if (!GenerateTextModels.Contains(model))
+            throw new Exception($"Not a valid model provided. Please provide either of: {String.Join(", ", GenerateTextModels)}");
+        
+        var prompt = $"Rewrite the following text to have the following moods, style and tone: {input.ReshapeInstructions}." +
+                     "Don't change a meaning of the text, don't provide information that is not given in the text. " +
+                     $"Text: {input.Text}";
+        
+        var client = new CohereClient();
+        var request = new CohereRequest("/generate", Method.Post, authenticationCredentialsProviders);
+        request.AddJsonBody(new
+        {
+            Prompt = prompt,
+            Model = model,
+            Max_tokens = input.MaximumTokensNumber,
+            Temperature = input.Temperature ?? 0.1
+        });
+        
+        var generations = await client.ExecuteWithHandling<ReshapeTextResponseWrapper>(request);
+        return generations.Generations.First();
+    }
+
     [Action("Calculate similarity of two texts", Description = "Calculate the similarity of texts provided. The result " +
                                                                "of this action is a percentage similarity score. The " +
                                                                "higher the score, the more similar the texts are.")]
