@@ -479,4 +479,27 @@ public class Actions
         var resultText = string.Join("\n", rerankedTexts.Results.Select(r => r.Text));
         return new RerankTextsResponse { RerankedTexts = resultText };
     }
+    
+    [Action("Generate embedding", Description = "Generate text embedding. An embedding is a list of floating point " +
+                                                "numbers that captures semantic information about the text that it " +
+                                                "represents.")]
+    public async Task<GenerateEmbeddingResponse> GenerateEmbedding(
+        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
+        [ActionParameter] GenerateEmbeddingRequest input)
+    {
+        var model = input.Model ?? "embed-english-v2.0";
+        if (!EmbedModels.Contains(model))
+            throw new Exception($"Not a valid model provided. Please provide either of: {String.Join(", ", EmbedModels)}");
+
+        var client = new CohereClient();
+        var request = new CohereRequest("/embed", Method.Post, authenticationCredentialsProviders);
+        request.AddJsonBody(new
+        {
+            Texts = new[] { input.Text },
+            Model = model
+        });
+
+        var embeddings = await client.ExecuteWithHandling<GenerateEmbeddingResponseWrapper>(request);
+        return new GenerateEmbeddingResponse { Embedding = embeddings.Embeddings.First() };
+    }
 }
