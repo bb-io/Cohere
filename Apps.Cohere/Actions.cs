@@ -323,6 +323,50 @@ public class Actions
         var generations = await client.ExecuteWithHandling<ReshapeTextResponseWrapper>(request);
         return generations.Generations.First();
     }
+    
+    [Action("Detect locale", Description = "Detect locale of the text provided.")]
+    public async Task<DetectLocaleResponse> DetectLocale(
+        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
+        [ActionParameter] DetectLocaleRequest input)
+    {
+        var model = input.Model ?? "command";
+        if (!GenerateTextModels.Contains(model))
+            throw new Exception($"Not a valid model provided. Please provide either of: {String.Join(", ", GenerateTextModels)}");
+        
+        var prompt = @$"
+                This is a locale detector.
+
+                Text: Як працюють великі мовні моделі?
+                Locale: uk_UA
+
+                Text: Esta canción está poca madre.
+                Locale: es-MX
+
+                Text: Do you wanna hang out later this avo?
+                Locale: en_AU
+
+                Text: 你想待会儿一起出去吗
+                Locale: zh_CN 
+
+                Text: Londres est la capitale de la Grande-Bretagne
+                Locale: fr_FR
+
+                Text: {input.Text}
+                Locale:
+                ";
+        
+        var client = new CohereClient();
+        var request = new CohereRequest("/generate", Method.Post, authenticationCredentialsProviders);
+        request.AddJsonBody(new
+        {
+            Prompt = prompt,
+            Model = model,
+            Temperature = 0
+        });
+        
+        var generations = await client.ExecuteWithHandling<DetectLocaleResponseWrapper>(request);
+        return generations.Generations.First();
+    }
 
     [Action("Calculate similarity of two texts", Description = "Calculate the similarity of texts provided. The result " +
                                                                "of this action is a percentage similarity score. The " +
