@@ -12,6 +12,9 @@ public class ReshapeTextRequest
     [Display("Maximum number of tokens")]
     public int MaximumTokensNumber { get; set; }
     
+    [Display("Additional instruction")]
+    public string? AdditionalInstruction { get; set; }
+    
     public string? Model { get; set; }
     
     public float? Temperature { get; set; }

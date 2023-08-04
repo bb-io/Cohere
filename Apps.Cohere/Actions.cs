@@ -166,13 +166,32 @@ public class Actions
         IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
         [ActionParameter] AnalyzeTextRequest input)
     {
-        var model = input.Model ?? "command-nightly";
+        var model = input.Model ?? "command";
         if (!GenerateTextModels.Contains(model))
             throw new Exception($"Not a valid model provided. Please provide either of: {String.Join(", ", GenerateTextModels)}");
 
-        var prompt = "Extract style, mood and tone of the following text. Respond with style, mood and tone detected " +
-                     "in the text in the following way: Style: {style description}, mood: {mood description}, " +
-                     $"tone: {{tone description}}. Text: {input.Text}";
+        var prompt = @$"
+                This is a few words description of style, mood and tone generator.
+
+                Text: We can solve the problem of applications operating in isolation and in dispersed modalities by 
+                enabling integration, automation, and seamless analytics between the apps, data, content, participants, 
+                and devices used for localization and globalization management. However, Blackbird goes beyond connecting 
+                applications, data, and content within an organization. It can also connect organizations into networks 
+                - e.g. the end clients who create the content with multiple localization vendors. Our mission is to 
+                become the global language services industry’s best iPaaS and automation-platform-as-a-service technology 
+                vendor. At Blackbird, our integration platform revolves around Birds. All the time. Lines of code are 
+                transformed into the four forces of flight: lift (triggers), weight (actions), thrust (apps), and 
+                drag (connections). The way the four forces act on your Bird makes it do different things. Fine, but how, 
+                you could ask. Think about the apps you use for your business. Your initial list should have at least 
+                one e-mail client, project management software, translation memory software or billing software. You can 
+                connect and make them communicate with each other in Blackbird.
+                
+                Result: Professional and informative style, positive and excited mood, educative tone.
+                
+                Text: {input.Text}
+                
+                Result:
+            ";
         
         var client = new CohereClient();
         var request = new CohereRequest("/generate", Method.Post, authenticationCredentialsProviders);
@@ -181,7 +200,7 @@ public class Actions
             Prompt = prompt,
             Model = model,
             Max_tokens = 100,
-            Temperature = 0.1
+            Temperature = 0
         });
         
         var generations = await client.ExecuteWithHandling<AnalyzeTextResponseWrapper>(request);
@@ -199,10 +218,24 @@ public class Actions
             throw new Exception($"Not a valid model provided. Please provide either of: {String.Join(", ", GenerateTextModels)}");
 
         var analyses = string.Join("\n", input.TextAnalyses);
-        var prompt = "Analyse the following text with information about styles, moods and tones of different texts and " +
-                     "find common patterns in styles, moods and tones. Respond with styles, moods and tones common " +
-                     "patterns description in the following way: Styles: {styles description}, moods: {moods description}, " +
-                     $"tones: {{tones description}}. Text: {analyses}";
+        var prompt = @$"
+                This is a common patterns in styles, moods and tones analyser.
+
+                Text:
+                Scientific and informative style, objective and detached mood, expository tone.
+                Professional and informative style, informative and historical mood, informative tone.
+                Informative and descriptive style, positive and uplifting mood, informative tone.
+                Factual and informative style, neutral and descriptive mood, informative tone.
+                Professional and informative style, calm and confident mood, informative tone.
+                Informative and educational style, positive and excited mood, expository tone.
+
+                Result: Informative and professional style,  objective, neutral, and informative mood, informative and educational tone.
+
+                Text:
+                {analyses}
+
+                Result:
+                ";
         
         var client = new CohereClient();
         var request = new CohereRequest("/generate", Method.Post, authenticationCredentialsProviders);
@@ -226,10 +259,56 @@ public class Actions
         var model = input.Model ?? "command";
         if (!GenerateTextModels.Contains(model))
             throw new Exception($"Not a valid model provided. Please provide either of: {String.Join(", ", GenerateTextModels)}");
-        
-        var prompt = $"Rewrite the following text to have the following moods, style and tone: {input.ReshapeInstructions}." +
-                     "Don't change a meaning of the text, don't provide information that is not given in the text. " +
-                     $"Text: {input.Text}";
+
+        var additionalInstruction = input.AdditionalInstruction ?? "";
+        var prompt = @$"
+                This is a rewriter of the input text which reshapes the text so that it matches the target style, mood, and tone.
+
+                Text:
+                We can solve the problem of applications operating in isolation and in dispersed modalities by enabling integration, 
+                automation, and seamless analytics between the apps, data, content, participants, and devices used for localization 
+                and globalization management. However, Blackbird goes beyond connecting applications, data, and content within an 
+                organization. It can also connect organizations into networks - e.g. the end clients who create the content with 
+                multiple localization vendors. Our mission is to become the global language services industry’s best iPaaS and 
+                automation-platform-as-a-service technology vendor. At Blackbird, our integration platform revolves around Birds. 
+                All the time. Lines of code are transformed into the four forces of flight: lift (triggers), weight (actions), 
+                thrust (apps), and drag (connections). The way the four forces act on your Bird makes it do different things. Fine, 
+                but how, you could ask. Think about the apps you use for your business. Your initial list should have at least 
+                one e-mail client, project management software, translation memory software or billing software. You can connect 
+                and make them communicate with each other in Blackbird.
+
+                Target style, mood, and tone: 
+                Enchanting, magical, adventurous, thrilling, suspenseful, mysterious, and exciting style, positive and uplifting 
+                mood, engaging and immersive tone.
+
+                Additional instruction: 
+
+                Result:
+                Step into the world of Blackbird, where enchanting possibilities await. Our magical platform holds the key to 
+                adventurous solutions for applications, dispersed modalities, and seamless analytics. Let the thrill of integration, 
+                automation, and connectivity sweep you off your feet as you embark on a suspenseful journey.
+                At Blackbird, we go beyond ordinary connections within organizations. We create networks that span across end 
+                clients, content creators, and multiple localization vendors. Our mission is to become the beacon of the global 
+                language services industry, the best iPaaS, and automation-platform-as-a-service technology vendor.
+                Imagine the immersive experience of our integration platform, where lines of code transform into the four forces 
+                of flight - lift, weight, thrust, and drag. Like the majestic wings of a bird, your applications, data, and 
+                content come together in harmony. Your business apps, the e-mail client, project management software, translation 
+                memory software, or billing software, they all converge and communicate within the captivating world of Blackbird.
+                With positive energy and uplifting spirit, we invite you to soar with us, discovering the endless possibilities 
+                of our enchanted platform. The mysteries of technology unfold before your eyes, and excitement fills the air. 
+                Welcome to the world of Blackbird, where magic and innovation intertwine, and your dreams take flight.
+
+                Text: 
+                {input.Text}                
+
+                Target style, mood, and tone: 
+                {input.ReshapeInstructions}
+
+                Additional instruction: 
+                {additionalInstruction}
+
+                Result:  
+                ";
         
         var client = new CohereClient();
         var request = new CohereRequest("/generate", Method.Post, authenticationCredentialsProviders);
@@ -238,7 +317,7 @@ public class Actions
             Prompt = prompt,
             Model = model,
             Max_tokens = input.MaximumTokensNumber,
-            Temperature = input.Temperature ?? 0.1
+            Temperature = input.Temperature ?? 1
         });
         
         var generations = await client.ExecuteWithHandling<ReshapeTextResponseWrapper>(request);
