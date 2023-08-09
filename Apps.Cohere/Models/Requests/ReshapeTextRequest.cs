@@ -1,4 +1,6 @@
-﻿using Blackbird.Applications.Sdk.Common;
+﻿using Apps.Cohere.DataSourceHandlers;
+using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Dynamic;
 
 namespace Apps.Cohere.Models.Requests;
 
@@ -15,7 +17,9 @@ public class ReshapeTextRequest
     [Display("Additional instruction")]
     public string? AdditionalInstruction { get; set; }
     
+    [DataSource(typeof(GenerateTextModelDataSourceHandler))]
     public string? Model { get; set; }
     
+    [DataSource(typeof(TemperatureDataSourceHandler))]
     public float? Temperature { get; set; }
 }

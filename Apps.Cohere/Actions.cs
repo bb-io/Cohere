@@ -15,46 +15,15 @@ namespace Apps.Cohere;
 [ActionList]
 public class Actions
 {
-    private static readonly List<string> GenerateTextModels = new() 
-    { 
-        "base", 
-        "base-light", 
-        "command", 
-        "command-light", 
-        "command-light-nightly", 
-        "command-nightly"
-    };
-    
-    private static readonly List<string> EmbedModels = new()
-    {
-        "embed-english-light-v2.0",
-        "embed-multilingual-v2.0",
-        "embed-english-v2.0"
-    };
-
-    private static readonly List<string> SummarizeModels = new()
-    {
-        "summarize-medium",
-        "summarize-xlarge"
-    };
-    
-    private static readonly List<string> RerankModels = new()
-    {
-        "rerank-english-v2.0",
-        "rerank-multilingual-v2.0"
-    };
-
     [Action("Generate text", Description = "Generate realistic text conditioned on a given input.")]
     public async Task<GenerateTextResponse> GenerateText(
         IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
         [ActionParameter] GenerateTextRequest input)
     {
         var model = input.Model ?? "command";
-        if (!GenerateTextModels.Contains(model))
-            throw new Exception($"Not a valid model provided. Please provide either of: {String.Join(", ", GenerateTextModels)}");
-        
         var client = new CohereClient();
         var request = new CohereRequest("/generate", Method.Post, authenticationCredentialsProviders);
+        
         request.AddJsonBody(new
         {
             Prompt = input.Prompt,
@@ -79,9 +48,6 @@ public class Actions
         [ActionParameter] ExtractEntityFromTextRequest input)
     {
         var model = input.Model ?? "command";
-        if (!GenerateTextModels.Contains(model))
-            throw new Exception($"Not a valid model provided. Please provide either of: {String.Join(", ", GenerateTextModels)}");
-        
         var client = new CohereClient();
         var request = new CohereRequest("/generate", Method.Post, authenticationCredentialsProviders);
         request.AddJsonBody(new
@@ -103,9 +69,6 @@ public class Actions
         [ActionParameter] EditTextRequest input)
     {
         var model = input.Model ?? "command";
-        if (!GenerateTextModels.Contains(model))
-            throw new Exception($"Not a valid model provided. Please provide either of: {String.Join(", ", GenerateTextModels)}");
-        
         var client = new CohereClient();
         var request = new CohereRequest("/generate", Method.Post, authenticationCredentialsProviders);
         request.AddJsonBody(new
@@ -143,9 +106,6 @@ public class Actions
         }
         
         var model = input.Model ?? "command-nightly";
-        if (!GenerateTextModels.Contains(model))
-            throw new Exception($"Not a valid model provided. Please provide either of: {String.Join(", ", GenerateTextModels)}");
-        
         var client = new CohereClient();
         var request = new CohereRequest("/generate", Method.Post, authenticationCredentialsProviders);
         var maximumTokensNumber = await GetTokensNumber(client, input.Text, model) + 20;
@@ -167,9 +127,6 @@ public class Actions
         [ActionParameter] AnalyzeTextRequest input)
     {
         var model = input.Model ?? "command";
-        if (!GenerateTextModels.Contains(model))
-            throw new Exception($"Not a valid model provided. Please provide either of: {String.Join(", ", GenerateTextModels)}");
-
         var prompt = @$"
                 This is a few words description of style, mood and tone generator.
 
@@ -214,9 +171,6 @@ public class Actions
         [ActionParameter] SummariseTextAnalysesRequest input)
     {
         var model = input.Model ?? "command";
-        if (!GenerateTextModels.Contains(model))
-            throw new Exception($"Not a valid model provided. Please provide either of: {String.Join(", ", GenerateTextModels)}");
-
         var analyses = string.Join("\n", input.TextAnalyses);
         var prompt = @$"
                 This is a common patterns in styles, moods and tones analyser.
@@ -257,9 +211,6 @@ public class Actions
         [ActionParameter] ReshapeTextRequest input)
     {
         var model = input.Model ?? "command";
-        if (!GenerateTextModels.Contains(model))
-            throw new Exception($"Not a valid model provided. Please provide either of: {String.Join(", ", GenerateTextModels)}");
-
         var additionalInstruction = input.AdditionalInstruction ?? "";
         var prompt = @$"
                 This is a rewriter of the input text which reshapes the text so that it matches the target style, mood, and tone.
@@ -330,9 +281,6 @@ public class Actions
         [ActionParameter] DetectLocaleRequest input)
     {
         var model = input.Model ?? "command";
-        if (!GenerateTextModels.Contains(model))
-            throw new Exception($"Not a valid model provided. Please provide either of: {String.Join(", ", GenerateTextModels)}");
-        
         var prompt = @$"
                 This is a locale detector.
 
@@ -385,9 +333,6 @@ public class Actions
         }
         
         var model = input.Model ?? "embed-english-v2.0";
-        if (!EmbedModels.Contains(model))
-            throw new Exception($"Not a valid model provided. Please provide either of: {String.Join(", ", EmbedModels)}");
-
         var client = new CohereClient();
         var request = new CohereRequest("/embed", Method.Post, authenticationCredentialsProviders);
         request.AddJsonBody(new
@@ -416,9 +361,6 @@ public class Actions
                                 "each example has a corresponding label.");
         
         var model = input.Model ?? "embed-english-v2.0";
-        if (!EmbedModels.Contains(model))
-            throw new Exception($"Not a valid model provided. Please provide either of: {String.Join(", ", EmbedModels)}");
-
         var client = new CohereClient();
         var request = new CohereRequest("/classify", Method.Post, authenticationCredentialsProviders);
         request.AddJsonBody(new
@@ -453,9 +395,6 @@ public class Actions
         }
         
         var model = input.Model ?? "embed-english-v2.0";
-        if (!EmbedModels.Contains(model))
-            throw new Exception($"Not a valid model provided. Please provide either of: {String.Join(", ", EmbedModels)}");
-
         var fileExtension = input.Filename.Split(".")[^1];
         if (fileExtension != "csv")
             throw new Exception("Please provide csv file");
@@ -495,9 +434,6 @@ public class Actions
         [ActionParameter] SummarizeTextRequest input)
     {
         var model = input.Model ?? "summarize-xlarge";
-        if (!SummarizeModels.Contains(model))
-            throw new Exception($"Not a valid model provided. Please provide either of: {String.Join(", ", SummarizeModels)}");
-        
         var client = new CohereClient();
         var request = new CohereRequest("/summarize", Method.Post, authenticationCredentialsProviders);
         request.AddJsonBody(new
@@ -522,12 +458,6 @@ public class Actions
         [ActionParameter] RerankTextsRequest input)
     {
         var model = input.Model ?? "rerank-multilingual-v2.0";
-        if (!RerankModels.Contains(model))
-            throw new Exception($"Not a valid model provided. Please provide either of: {String.Join(", ", RerankModels)}");
-
-        if (input.MinimumRelevanceScore != null && (input.MinimumRelevanceScore < 0 || input.MinimumRelevanceScore > 1))
-            throw new Exception("Value of minimum relevance score parameter must be in range from 0.0 to 1.0");
-        
         var client = new CohereClient();
         var request = new CohereRequest("/rerank", Method.Post, authenticationCredentialsProviders);
         request.AddJsonBody(new
@@ -572,12 +502,6 @@ public class Actions
         }
 
         var model = input.Model ?? "rerank-multilingual-v2.0";
-        if (!RerankModels.Contains(model))
-            throw new Exception($"Not a valid model provided. Please provide either of: {String.Join(", ", RerankModels)}");
-
-        if (input.MinimumRelevanceScore != null && (input.MinimumRelevanceScore < 0 || input.MinimumRelevanceScore > 1))
-            throw new Exception("Value of minimum relevance score parameter must be in range from 0.0 to 1.0");
-        
         var fileExtension = input.Filename.Split(".")[^1];
         if (fileExtension != "txt")
             throw new Exception("Please provide txt file");
@@ -611,9 +535,6 @@ public class Actions
         [ActionParameter] GenerateEmbeddingRequest input)
     {
         var model = input.Model ?? "embed-english-v2.0";
-        if (!EmbedModels.Contains(model))
-            throw new Exception($"Not a valid model provided. Please provide either of: {String.Join(", ", EmbedModels)}");
-
         var client = new CohereClient();
         var request = new CohereRequest("/embed", Method.Post, authenticationCredentialsProviders);
         request.AddJsonBody(new
