@@ -546,4 +546,23 @@ public class Actions
         var embeddings = await client.ExecuteWithHandling<GenerateEmbeddingResponseWrapper>(request);
         return new GenerateEmbeddingResponse { Embedding = embeddings.Embeddings.First() };
     }
+    
+    [Action("Tokenize text", Description = "Tokenize text. Specify model to ensure that the tokenization uses the " +
+                                           "tokenizer used by specific model.")]
+    public async Task<TokenizeTextResponse> TokenizeText(
+        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
+        [ActionParameter] TokenizeTextRequest input)
+    {
+        var model = input.Model ?? "command";
+        var client = new CohereClient();
+        var request = new CohereRequest("/tokenize", Method.Post, authenticationCredentialsProviders);
+        request.AddJsonBody(new
+        {
+            Text = input.Text,
+            Model = model
+        });
+
+        var tokens = await client.ExecuteWithHandling<TokenizeTextResponse>(request);
+        return tokens;
+    }
 }
