@@ -395,7 +395,7 @@ public class Actions
         }
         
         var model = input.Model ?? "embed-english-v2.0";
-        var fileExtension = input.Filename.Split(".")[^1];
+        var fileExtension = input.CsvFileWithExamples.Name.Split(".")[^1];
         if (fileExtension != "csv")
             throw new Exception("Please provide csv file");
 
@@ -404,7 +404,8 @@ public class Actions
         request.AddJsonBody(new
         {
             Inputs = new[] { input.Text },
-            Examples = GetExamplesFromCsvFile(input.CsvFileWithExamples).Select(item => new { text = item.Text, label = item.Label }),
+            Examples = GetExamplesFromCsvFile(input.CsvFileWithExamples.Bytes)
+                .Select(item => new { text = item.Text, label = item.Label }),
             Model = model
         });
         
@@ -502,13 +503,13 @@ public class Actions
         }
 
         var model = input.Model ?? "rerank-multilingual-v2.0";
-        var fileExtension = input.Filename.Split(".")[^1];
+        var fileExtension = input.TxtFileWithTexts.Name.Split(".")[^1];
         if (fileExtension != "txt")
             throw new Exception("Please provide txt file");
         
         var client = new CohereClient();
         var request = new CohereRequest("/rerank", Method.Post, authenticationCredentialsProviders);
-        var documents = await GetDocumentsFromFile(input.TxtFileWithTexts);
+        var documents = await GetDocumentsFromFile(input.TxtFileWithTexts.Bytes);
         request.AddJsonBody(new
         {
             Query = input.Query,

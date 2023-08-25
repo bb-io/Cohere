@@ -1,6 +1,7 @@
 ﻿using Apps.Cohere.DataSourceHandlers;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dynamic;
+using File = Blackbird.Applications.Sdk.Common.Files.File;
 
 namespace Apps.Cohere.Models.Requests;
 
@@ -9,10 +10,8 @@ public class RerankTextsProvidedInFileRequest
     public string Query { get; set; }
     
     [Display("Txt file with texts")]
-    public byte[] TxtFileWithTexts { get; set; }
-    
-    public string Filename { get; set; }
-    
+    public File TxtFileWithTexts { get; set; }
+
     [Display("Number of most relevant texts to include")]
     public int TopN { get; set; }
     
