@@ -1,5 +1,4 @@
-﻿using Apps.Cohere.Dtos;
-using Blackbird.Applications.Sdk.Common;
+﻿using Blackbird.Applications.Sdk.Common;
 
 namespace Apps.Cohere.Models.Responses;
 
