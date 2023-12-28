@@ -5,12 +5,12 @@
     <Nullable>enable</Nullable>
     <Product>Cohere</Product>
     <Description>Provides access to large language models that can be used for a variety of tasks such as generating text, answering questions, and summarizing text</Description>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <AssemblyName>Apps.Cohere</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Blackbird.Applications.Sdk.Common" Version="2.3.2-alpha1" />
-    <PackageReference Include="Blackbird.Applications.SDK.Extensions.FileManagement" Version="1.0.0-alpha2" />
+    <PackageReference Include="Blackbird.Applications.SDK.Extensions.FileManagement" Version="1.0.1" />
     <PackageReference Include="CsvHelper" Version="30.0.1" />
     <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
