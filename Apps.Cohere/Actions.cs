@@ -5,6 +5,8 @@ using Apps.Cohere.Models.Responses;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Common.Files;
+using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using CsvHelper;
 using CsvHelper.Configuration;
 using MathNet.Numerics.LinearAlgebra;
@@ -15,6 +17,13 @@ namespace Apps.Cohere;
 [ActionList]
 public class Actions
 {
+    private readonly IFileManagementClient _fileManagementClient;
+
+    public Actions(IFileManagementClient fileManagementClient)
+    {
+        _fileManagementClient = fileManagementClient;
+    }
+
     [Action("Generate text", Description = "Generate realistic text conditioned on a given input.")]
     public async Task<GenerateTextResponse> GenerateText(
         IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
@@ -23,7 +32,7 @@ public class Actions
         var model = input.Model ?? "command";
         var client = new CohereClient();
         var request = new CohereRequest("/generate", Method.Post, authenticationCredentialsProviders);
-        
+
         request.AddJsonBody(new
         {
             Prompt = input.Prompt,
@@ -36,11 +45,11 @@ public class Actions
             Presence_penalty = input.PresencePenalty ?? 0.0,
             Stop_sequences = input.StopSequences
         });
-        
+
         var generations = await client.ExecuteWithHandling<GenerateTextResponseWrapper>(request);
         return generations.Generations.First();
     }
-    
+
     [Action("Extract entity from text", Description = "Extract a piece of information from text. Provide entity that " +
                                                       "you want to extract from a text (e.g. product title).")]
     public async Task<ExtractEntityFromTextResponse> ExtractEntityFromText(
@@ -57,13 +66,14 @@ public class Actions
             Max_tokens = input.MaximumTokensNumber ?? 100,
             Temperature = input.Temperature ?? 0.75
         });
-        
+
         var extractions = await client.ExecuteWithHandling<ExtractEntityFromTextResponseWrapper>(request);
         return extractions.Generations.First();
     }
-    
-    [Action("Edit text", Description = "Edit the input text given an instruction prompt (e.g. make it more concise or " +
-                                       "make it more friendly).")]
+
+    [Action("Edit text", Description =
+        "Edit the input text given an instruction prompt (e.g. make it more concise or " +
+        "make it more friendly).")]
     public async Task<EditTextResponse> EditText(
         IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
         [ActionParameter] EditTextRequest input)
@@ -87,8 +97,9 @@ public class Actions
         var generations = await client.ExecuteWithHandling<EditTextResponseWrapper>(request);
         return generations.Generations.First();
     }
-    
-    [Action("Perform grammar and spelling check", Description = "Perform a grammar and spelling check of the text provided.")]
+
+    [Action("Perform grammar and spelling check",
+        Description = "Perform a grammar and spelling check of the text provided.")]
     public async Task<PerformGrammarAndSpellingCheckResponse> PerformGrammarAndSpellingCheck(
         IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
         [ActionParameter] PerformGrammarAndSpellingCheckRequest input)
@@ -104,14 +115,15 @@ public class Actions
             var tokens = await client.ExecuteWithHandling<TokensDto>(request);
             return tokens.Tokens.Length;
         }
-        
+
         var model = input.Model ?? "command-nightly";
         var client = new CohereClient();
         var request = new CohereRequest("/generate", Method.Post, authenticationCredentialsProviders);
         var maximumTokensNumber = await GetTokensNumber(client, input.Text, model) + 20;
         request.AddJsonBody(new
         {
-            Prompt = $"Perform a grammar and spelling check of the text provided and respond with the corrected text: {input.Text}",
+            Prompt =
+                $"Perform a grammar and spelling check of the text provided and respond with the corrected text: {input.Text}",
             Model = model,
             Max_tokens = maximumTokensNumber,
             Temperature = 0.1
@@ -149,7 +161,7 @@ public class Actions
                 
                 Result:
             ";
-        
+
         var client = new CohereClient();
         var request = new CohereRequest("/generate", Method.Post, authenticationCredentialsProviders);
         request.AddJsonBody(new
@@ -159,13 +171,14 @@ public class Actions
             Max_tokens = 100,
             Temperature = 0
         });
-        
+
         var generations = await client.ExecuteWithHandling<AnalyzeTextResponseWrapper>(request);
         return generations.Generations.First();
     }
-    
-    [Action("Summarise text analyses", Description = "Summarise information about styles, moods and tones of different " +
-                                                     "texts to find common patterns in styles, moods and tones.")]
+
+    [Action("Summarise text analyses", Description =
+        "Summarise information about styles, moods and tones of different " +
+        "texts to find common patterns in styles, moods and tones.")]
     public async Task<SummariseTextAnalysesResponse> SummariseTextAnalyses(
         IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
         [ActionParameter] SummariseTextAnalysesRequest input)
@@ -190,7 +203,7 @@ public class Actions
 
                 Result:
                 ";
-        
+
         var client = new CohereClient();
         var request = new CohereRequest("/generate", Method.Post, authenticationCredentialsProviders);
         request.AddJsonBody(new
@@ -200,12 +213,13 @@ public class Actions
             Max_tokens = 150,
             Temperature = 0.1
         });
-        
+
         var generations = await client.ExecuteWithHandling<SummariseTextAnalysesResponseWrapper>(request);
         return generations.Generations.First();
     }
-    
-    [Action("Reshape text", Description = "Reshape the text. Provide the information about target style, mood and tone.")]
+
+    [Action("Reshape text",
+        Description = "Reshape the text. Provide the information about target style, mood and tone.")]
     public async Task<ReshapeTextResponse> ReshapeText(
         IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
         [ActionParameter] ReshapeTextRequest input)
@@ -260,7 +274,7 @@ public class Actions
 
                 Result:  
                 ";
-        
+
         var client = new CohereClient();
         var request = new CohereRequest("/generate", Method.Post, authenticationCredentialsProviders);
         request.AddJsonBody(new
@@ -270,11 +284,11 @@ public class Actions
             Max_tokens = input.MaximumTokensNumber,
             Temperature = input.Temperature ?? 1
         });
-        
+
         var generations = await client.ExecuteWithHandling<ReshapeTextResponseWrapper>(request);
         return generations.Generations.First();
     }
-    
+
     [Action("Detect locale", Description = "Detect locale of the text provided.")]
     public async Task<DetectLocaleResponse> DetectLocale(
         IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
@@ -302,7 +316,7 @@ public class Actions
                 Text: {input.Text}
                 Locale:
                 ";
-        
+
         var client = new CohereClient();
         var request = new CohereRequest("/generate", Method.Post, authenticationCredentialsProviders);
         request.AddJsonBody(new
@@ -311,14 +325,15 @@ public class Actions
             Model = model,
             Temperature = 0
         });
-        
+
         var generations = await client.ExecuteWithHandling<DetectLocaleResponseWrapper>(request);
         return generations.Generations.First();
     }
 
-    [Action("Calculate similarity of two texts", Description = "Calculate the similarity of texts provided. The result " +
-                                                               "of this action is a percentage similarity score. The " +
-                                                               "higher the score, the more similar the texts are.")]
+    [Action("Calculate similarity of two texts", Description =
+        "Calculate the similarity of texts provided. The result " +
+        "of this action is a percentage similarity score. The " +
+        "higher the score, the more similar the texts are.")]
     public async Task<CalculateTextsSimilarityResponse> CalculateTextsSimilarity(
         IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
         [ActionParameter] CalculateTextsSimilarityRequest input)
@@ -331,7 +346,7 @@ public class Actions
             var similarityScore = embeddingsDotProduct / (firstTextEmbeddingNorm * secondTextEmbeddingNorm);
             return similarityScore;
         }
-        
+
         var model = input.Model ?? "embed-english-v2.0";
         var client = new CohereClient();
         var request = new CohereRequest("/embed", Method.Post, authenticationCredentialsProviders);
@@ -340,7 +355,7 @@ public class Actions
             Texts = new[] { input.FirstText, input.SecondText },
             Model = model
         });
-        
+
         var embeddings = await client.ExecuteWithHandling<EmbeddingsDto>(request);
         var firstTextEmbedding = Vector<double>.Build.DenseOfArray(embeddings.Embeddings[0]);
         var secondTextEmbedding = Vector<double>.Build.DenseOfArray(embeddings.Embeddings[1]);
@@ -349,17 +364,19 @@ public class Actions
         return new CalculateTextsSimilarityResponse { SimilarityScore = similarityScoreInPercents };
     }
 
-    [Action("Classify text", Description = "Classify text input. This action requires examples and their corresponding " +
-                                           "labels to be specified. Each unique label requires at least two examples " +
-                                           "associated with it.")]
+    [Action("Classify text", Description =
+        "Classify text input. This action requires examples and their corresponding " +
+        "labels to be specified. Each unique label requires at least two examples " +
+        "associated with it.")]
     public async Task<ClassifyTextsResponse> ClassifyText(
         IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
         [ActionParameter] ClassifyTextsRequest input)
     {
         if (input.ExampleTexts.Count() != input.ExampleLabels.Count())
-            throw new Exception("The number of example texts should be equal to the number of example labels, so that " +
-                                "each example has a corresponding label.");
-        
+            throw new Exception(
+                "The number of example texts should be equal to the number of example labels, so that " +
+                "each example has a corresponding label.");
+
         var model = input.Model ?? "embed-english-v2.0";
         var client = new CohereClient();
         var request = new CohereRequest("/classify", Method.Post, authenticationCredentialsProviders);
@@ -369,11 +386,11 @@ public class Actions
             Examples = input.ExampleTexts.Zip(input.ExampleLabels, (text, label) => new { text, label }),
             Model = model
         });
-        
+
         var classifications = await client.ExecuteWithHandling<ClassifyTextsResponseWrapper>(request);
         return classifications.Classifications.First();
     }
-    
+
     [Action("Classify text with examples as a file", Description = "Classify text input. This action requires a csv " +
                                                                    "file with examples and their corresponding labels. " +
                                                                    "Each file's line should have the form 'example, " +
@@ -383,17 +400,16 @@ public class Actions
         IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
         [ActionParameter] ClassifyTextWithFileExamplesRequest input)
     {
-        IEnumerable<ClassificationExampleDto> GetExamplesFromCsvFile(byte[] csvFile)
+        async Task<IEnumerable<ClassificationExampleDto>> GetExamplesFromCsvFile(FileReference csvFile)
         {
-            using (var stream = new MemoryStream(csvFile))
-            using (var reader = new StreamReader(stream))
-            using (var csvReader = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture) { HasHeaderRecord = false }))
-            {
-                var examples = csvReader.GetRecords<ClassificationExampleDto>().ToList();
-                return examples;
-            }
+            await using var stream = await _fileManagementClient.DownloadAsync(csvFile);
+            using var reader = new StreamReader(stream);
+            using var csvReader = new CsvReader(reader,
+                new CsvConfiguration(CultureInfo.InvariantCulture) { HasHeaderRecord = false });
+            var examples = csvReader.GetRecords<ClassificationExampleDto>().ToList();
+            return examples;
         }
-        
+
         var model = input.Model ?? "embed-english-v2.0";
         var fileExtension = input.CsvFileWithExamples.Name.Split(".")[^1];
         if (fileExtension != "csv")
@@ -404,11 +420,11 @@ public class Actions
         request.AddJsonBody(new
         {
             Inputs = new[] { input.Text },
-            Examples = GetExamplesFromCsvFile(input.CsvFileWithExamples.Bytes)
+            Examples = (await GetExamplesFromCsvFile(input.CsvFileWithExamples))
                 .Select(item => new { text = item.Text, label = item.Label }),
             Model = model
         });
-        
+
         var classifications = await client.ExecuteWithHandling<ClassifyTextsResponseWrapper>(request);
         return classifications.Classifications.First();
     }
@@ -424,11 +440,11 @@ public class Actions
         {
             Texts = new[] { input.Text }
         });
-        
+
         var detection = await client.ExecuteWithHandling<DetectLanguageResponseWrapper>(request);
         return detection.Results.First();
     }
-    
+
     [Action("Summarize text", Description = "Summarize the text provided.")]
     public async Task<SummarizeTextResponse> SummarizeText(
         IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
@@ -447,11 +463,11 @@ public class Actions
             Temperature = input.Temperature ?? 0.75,
             Additional_command = input.AdditionalCommand
         });
-        
+
         var summary = await client.ExecuteWithHandling<SummarizeTextResponse>(request);
         return summary;
     }
-    
+
     [Action("Rerank texts", Description = "This action takes in a query and a list of texts and produces an ordered " +
                                           "list with each text assigned a relevance score.")]
     public async Task<RerankTextsResponse> RerankTexts(
@@ -469,7 +485,7 @@ public class Actions
             Top_n = input.TopN ?? input.Texts.Count(),
             Return_documents = true
         });
-        
+
         var rerankedTexts = await client.ExecuteWithHandling<RerankedTextDtoWrapper>(request);
 
         if (input.MinimumRelevanceScore != null)
@@ -478,7 +494,7 @@ public class Actions
         var resultText = string.Join("\n", rerankedTexts.Results.Select(r => r.Text));
         return new RerankTextsResponse { RerankedTexts = resultText };
     }
-    
+
     [Action("Rerank texts provided in a file", Description = "This action takes in a query and a txt file with list " +
                                                              "of texts and produces a text combined from most relevant " +
                                                              "texts. Each text in the file must start on a new line.")]
@@ -486,17 +502,16 @@ public class Actions
         IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
         [ActionParameter] RerankTextsProvidedInFileRequest input)
     {
-        async Task<List<string>> GetDocumentsFromFile(byte[] file)
+        async Task<List<string>> GetDocumentsFromFile(FileReference file)
         {
             var documents = new List<string>();
-            using (var stream = new MemoryStream(file))
-            using (var reader = new StreamReader(stream))
+
+            await using var stream = await _fileManagementClient.DownloadAsync(file);
+            using var reader = new StreamReader(stream);
+            while (!reader.EndOfStream)
             {
-                while (!reader.EndOfStream)
-                {
-                    var line = await reader.ReadLineAsync();
-                    documents.Add(line);
-                }
+                var line = await reader.ReadLineAsync();
+                documents.Add(line);
             }
 
             return documents;
@@ -506,10 +521,10 @@ public class Actions
         var fileExtension = input.TxtFileWithTexts.Name.Split(".")[^1];
         if (fileExtension != "txt")
             throw new Exception("Please provide txt file");
-        
+
         var client = new CohereClient();
         var request = new CohereRequest("/rerank", Method.Post, authenticationCredentialsProviders);
-        var documents = await GetDocumentsFromFile(input.TxtFileWithTexts.Bytes);
+        var documents = await GetDocumentsFromFile(input.TxtFileWithTexts);
         request.AddJsonBody(new
         {
             Query = input.Query,
@@ -518,7 +533,7 @@ public class Actions
             Top_n = input.TopN,
             Return_documents = true
         });
-        
+
         var rerankedTexts = await client.ExecuteWithHandling<RerankedTextDtoWrapper>(request);
 
         if (input.MinimumRelevanceScore != null)
@@ -527,7 +542,7 @@ public class Actions
         var resultText = string.Join("\n", rerankedTexts.Results.Select(r => r.Text));
         return new RerankTextsResponse { RerankedTexts = resultText };
     }
-    
+
     [Action("Generate embedding", Description = "Generate text embedding. An embedding is a list of floating point " +
                                                 "numbers that captures semantic information about the text that it " +
                                                 "represents.")]
@@ -547,7 +562,7 @@ public class Actions
         var embeddings = await client.ExecuteWithHandling<GenerateEmbeddingResponseWrapper>(request);
         return new GenerateEmbeddingResponse { Embedding = embeddings.Embeddings.First() };
     }
-    
+
     [Action("Tokenize text", Description = "Tokenize text. Specify model to ensure that the tokenization uses the " +
                                            "tokenizer used by specific model.")]
     public async Task<TokenizeTextResponse> TokenizeText(
