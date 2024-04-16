@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <Product>Cohere</Product>
     <Description>Provides access to large language models that can be used for a variety of tasks such as generating text, answering questions, and summarizing text</Description>
-    <Version>1.0.3</Version>
+    <Version>1.0.4</Version>
     <AssemblyName>Apps.Cohere</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
