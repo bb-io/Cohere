@@ -1,34 +1,45 @@
 ﻿using Apps.Cohere.Dtos;
 using Apps.Cohere.Extensions;
+using Blackbird.Applications.Sdk.Common.Exceptions;
+using Blackbird.Applications.Sdk.Utils.RestSharp;
+using Newtonsoft.Json;
 using RestSharp;
 
 namespace Apps.Cohere;
 
-public class CohereClient : RestClient
+public class CohereClient : BlackBirdRestClient
 {
     public CohereClient() : base(new RestClientOptions { ThrowOnAnyError = false, BaseUrl = GetBaseUrl() }) { }
 
     private static Uri GetBaseUrl() => new("https://api.cohere.ai/v1");
     
-    public async Task<T> ExecuteWithHandling<T>(RestRequest request)
+ 
+    public virtual async Task<T> ExecuteWithErrorHandling<T>(RestRequest request)
     {
-        var response = await ExecuteWithHandling(request);
-        return SerializationExtensions.DeserializeResponseContent<T>(response.Content);
+        string content = (await ExecuteWithErrorHandling(request)).Content;
+        T val = JsonConvert.DeserializeObject<T>(content, JsonSettings);
+        if (val == null)
+        {
+            throw new Exception($"Could not parse {content} to {typeof(T)}");
+        }
+
+        return val;
     }
 
-    private async Task<RestResponse> ExecuteWithHandling(RestRequest request)
+    public virtual async Task<RestResponse> ExecuteWithErrorHandling(RestRequest request)
     {
-        var response = await ExecuteAsync(request);
-        
-        if (response.IsSuccessful)
-            return response;
+        RestResponse restResponse = await ExecuteAsync(request);
+        if (!restResponse.IsSuccessStatusCode)
+        {
+            throw ConfigureErrorException(restResponse);
+        }
 
-        throw ConfigureErrorException(response.Content);
+        return restResponse;
     }
 
-    private Exception ConfigureErrorException(string responseContent)
+    protected override Exception ConfigureErrorException(RestResponse response)
     {
-        var error = SerializationExtensions.DeserializeResponseContent<ErrorDto>(responseContent);
-        return new(error.Message);
+        var error = JsonConvert.DeserializeObject(response.Content!)!;
+        throw new PluginApplicationException(error.ToString() ?? response.Content);
     }
 }

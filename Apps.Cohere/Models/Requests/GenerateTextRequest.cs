@@ -6,6 +6,7 @@ namespace Apps.Cohere.Models.Requests;
 
 public class GenerateTextRequest
 {
+    [Display("Message")]
     public string Prompt { get; set; }
     
     [Display("Maximum number of tokens")]
@@ -25,13 +26,13 @@ public class GenerateTextRequest
     [DataSource(typeof(TopPDataSourceHandler))]
     public float? TopP { get; set; }
     
-    [Display("Frequency penalty (from 0.0 to 1.0)")]
-    [DataSource(typeof(PenaltyDataSourceHandler))]
-    public float? FrequencyPenalty { get; set; }
+    //[Display("Frequency penalty (from 0.0 to 1.0)")]
+    //[DataSource(typeof(PenaltyDataSourceHandler))]
+    //public float? FrequencyPenalty { get; set; }
     
-    [Display("Presence penalty (from 0.0 to 1.0)")]
-    [DataSource(typeof(PenaltyDataSourceHandler))]
-    public float? PresencePenalty { get; set; }
+    //[Display("Presence penalty (from 0.0 to 1.0)")]
+    //[DataSource(typeof(PenaltyDataSourceHandler))]
+    //public float? PresencePenalty { get; set; }
     
     [Display("Stop sequences")]
     public IEnumerable<string>? StopSequences { get; set; }
