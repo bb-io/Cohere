@@ -289,3 +289,4 @@ __pycache__/
 *.xsd.cs
 
 /Apps.Cohere/ApplicationConstants.cs
+/Tests.Cohere/appsettings.json
