@@ -1,6 +1,7 @@
 ﻿using Apps.Cohere;
 using Apps.Cohere.Models.Requests;
 using Newtonsoft.Json;
+using System.Text;
 using Tests.Cohere.Base;
 
 namespace Tests.Cohere
@@ -11,7 +12,7 @@ namespace Tests.Cohere
         [TestMethod]
         public async Task GenerateText_IssSuccess()
         {
-            var action = new Actions(InvocationContext,FileManager);
+            var action = new Actions(InvocationContext, FileManager);
 
             var result = await action.GenerateText(new Apps.Cohere.Models.Requests.GenerateTextRequest
             {
@@ -134,5 +135,111 @@ namespace Tests.Cohere
 
             Assert.IsNotNull(result);
         }
+
+        [TestMethod]
+        public async Task ReshapeText_ShouldReturnReshapedText()
+        {
+            var action = new Actions(InvocationContext, FileManager);
+
+            var input = new ReshapeTextRequest
+            {
+                Text = "Our platform connects apps and automates workflows to reduce manual effort and improve delivery speed.",
+                ReshapeInstructions = "professional, concise style; confident mood; informative tone",
+                MaximumTokensNumber = 120,
+                Temperature = 0.3f,
+                Model = "command-a-03-2025"
+            };
+
+            var result = await action.ReshapeText(input);
+
+            Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
+
+            Assert.IsNotNull(result);
+        }
+
+        [TestMethod]
+        public async Task DetectLocale_ShouldReturnLocale()
+        {
+            var action = new Actions(InvocationContext, FileManager);
+
+            var input = new DetectLocaleRequest
+            {
+                Text = "Ты сегодня идешь в кино?",
+                Model = "command-a-03-2025",
+            };
+
+            var result = await action.DetectLocale(input);
+
+            Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
+
+            Assert.IsNotNull(result);
+            Assert.IsFalse(string.IsNullOrWhiteSpace(result.Text));
+        }
+
+        [TestMethod]
+        public async Task CalculateTextsSimilarity_ShouldReturnScore()
+        {
+            var action = new Actions(InvocationContext, FileManager);
+
+            var input = new CalculateTextsSimilarityRequest
+            {
+                FirstText = "Blackbird connects your apps to automate localization workflows.",
+                SecondText = "Our platform integrates tools to streamline localization processes.",
+                Model = "embed-english-v3.0"
+            };
+
+            var result = await action.CalculateTextsSimilarity(input);
+
+            Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(result, Newtonsoft.Json.Formatting.Indented));
+            Assert.IsNotNull(result);
+        }
+       
+        [TestMethod]
+        public async Task RerankTexts_ShouldReturnOrderedTexts()
+        {
+            var action = new Actions(InvocationContext, FileManager);
+
+            var input = new RerankTextsRequest
+            {
+                Query = "automating localization workflows",
+                Texts = new[]
+                {
+                "Blackbird integrates your apps to automate localization workflows.",
+                "A tasty recipe for apple pie with cinnamon.",
+                "Tools that connect systems and reduce manual steps in translation projects."
+            },
+                TopN = 3,
+                MinimumRelevanceScore = 0.2f,
+                Model = "rerank-multilingual-v3.0"
+            };
+
+            var result = await action.RerankTexts(input);
+
+            Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
+
+            Assert.IsNotNull(result);
+        }
+
+        [TestMethod]
+        public async Task RerankTextsProvidedInFile_ShouldReturnOrderedTexts()
+        {
+            var action = new Actions(InvocationContext, FileManager);
+
+            var input = new RerankTextsProvidedInFileRequest
+            {
+                Query = "automating localization workflows",
+                TxtFileWithTexts = new Blackbird.Applications.Sdk.Common.Files.FileReference { Name=""},
+                TopN = 3,
+                MinimumRelevanceScore = 0.2f,
+                Model = "rerank-multilingual-v3.0"
+            };
+
+            var result = await action.RerankTextsProvidedInFile(input);
+
+            Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
+
+            Assert.IsNotNull(result);
+        }
+
     }
 }

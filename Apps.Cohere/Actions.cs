@@ -5,6 +5,7 @@ using Apps.Cohere.Models.Responses;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
@@ -24,6 +25,38 @@ public class Actions : Invocable
         invocationContext)
     {
         _fileManagementClient = fileManagementClient;
+    }
+
+    [Action("Translate text", Description = "Translate input text with Command A Translate.")]
+    public async Task<TranslateTextResponse> TranslateText([ActionParameter] TranslateTextRequest input)
+    {
+        var model = input.Model ?? "command-a-translate-08-2025";
+
+        var format = input.PreserveFormatting == true
+            ? "Preserve original formatting, line breaks and inline punctuation."
+            : "You may normalize spacing if needed.";
+
+        var source = string.IsNullOrWhiteSpace(input.SourceLanguage)
+            ? ""
+            : $"Source language: {input.SourceLanguage}\n";
+
+        var prompt =
+            $"Translate the following text into {input.TargetLanguage}. {format}\n" +
+            $"{source}\n" +
+            "Return only the translation, with no additional words or labels.\n\n" +
+            $"Text:\n{input.Text}";
+
+        var request = new CohereRequest("/chat", Method.Post, Creds);
+        request.AddJsonBody(new
+        {
+            message = prompt,
+            model = model,
+            max_tokens = input.MaxTokens.GetValueOrDefault(1024),
+            temperature = 0.0f
+        });
+
+        var resp = await Client.ExecuteWithErrorHandling<TranslateTextResponse>(request);
+        return new TranslateTextResponse { Text = resp.Text?.Trim() ?? string.Empty };
     }
 
     [Action("Generate text", Description = "Generate realistic text conditioned on a given input.")]
@@ -231,11 +264,9 @@ public class Actions : Invocable
 
     [Action("Reshape text",
         Description = "Reshape the text. Provide the information about target style, mood and tone.")]
-    public async Task<ReshapeTextResponse> ReshapeText(
-        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
-        [ActionParameter] ReshapeTextRequest input)
+    public async Task<ReshapeTextResponse> ReshapeText([ActionParameter] ReshapeTextRequest input)
     {
-        var model = input.Model ?? "command";
+        var model = input.Model ?? "command-a-03-2025";
         var additionalInstruction = input.AdditionalInstruction ?? "";
         var prompt = @$"
                 This is a rewriter of the input text which reshapes the text so that it matches the target style, mood, and tone.
@@ -285,27 +316,28 @@ public class Actions : Invocable
 
                 Result:  
                 ";
+      
+        var request = new CohereRequest("/chat", Method.Post, Creds);
 
-        var client = new CohereClient();
-        var request = new CohereRequest("/generate", Method.Post, authenticationCredentialsProviders);
         request.AddJsonBody(new
         {
-            Prompt = prompt,
-            Model = model,
-            Max_tokens = input.MaximumTokensNumber,
-            Temperature = input.Temperature ?? 1
+            message = prompt,
+            model = model,
+            max_tokens = input.MaximumTokensNumber > 0 ? input.MaximumTokensNumber : 300,
+            temperature = input.Temperature ?? 1.0f
         });
 
-        var generations = await client.ExecuteWithErrorHandling<ReshapeTextResponseWrapper>(request);
-        return generations.Generations.First();
+        var response = await Client.ExecuteWithErrorHandling<ReshapeTextResponse>(request);
+        return new ReshapeTextResponse
+        {
+            Text = response.Text ?? string.Empty
+        };
     }
 
     [Action("Detect locale", Description = "Detect locale of the text provided.")]
-    public async Task<DetectLocaleResponse> DetectLocale(
-        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
-        [ActionParameter] DetectLocaleRequest input)
+    public async Task<DetectLocaleResponse> DetectLocale([ActionParameter] DetectLocaleRequest input)
     {
-        var model = input.Model ?? "command";
+        var model = input.Model ?? "command-a-03-2025";
         var prompt = @$"
                 This is a locale detector.
 
@@ -328,26 +360,28 @@ public class Actions : Invocable
                 Locale:
                 ";
 
-        var client = new CohereClient();
-        var request = new CohereRequest("/generate", Method.Post, authenticationCredentialsProviders);
+        var request = new CohereRequest("/chat", Method.Post, Creds);
         request.AddJsonBody(new
         {
-            Prompt = prompt,
-            Model = model,
-            Temperature = 0
+            message = prompt,
+            model = model,
+            max_tokens = 16,
+            temperature = 0.0f,
+
         });
 
-        var generations = await client.ExecuteWithErrorHandling<DetectLocaleResponseWrapper>(request);
-        return generations.Generations.First();
+        var response = await Client.ExecuteWithErrorHandling<DetectLocaleResponse>(request);
+        return new DetectLocaleResponse
+        {
+            Text = response.Text ?? string.Empty
+        };
     }
 
     [Action("Calculate similarity of two texts", Description =
         "Calculate the similarity of texts provided. The result " +
         "of this action is a percentage similarity score. The " +
         "higher the score, the more similar the texts are.")]
-    public async Task<CalculateTextsSimilarityResponse> CalculateTextsSimilarity(
-        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
-        [ActionParameter] CalculateTextsSimilarityRequest input)
+    public async Task<CalculateTextsSimilarityResponse> CalculateTextsSimilarity([ActionParameter] CalculateTextsSimilarityRequest input)
     {
         double CalculateSimilarityScore(Vector<double> firstTextEmbedding, Vector<double> secondTextEmbedding)
         {
@@ -358,16 +392,16 @@ public class Actions : Invocable
             return similarityScore;
         }
 
-        var model = input.Model ?? "embed-english-v2.0";
-        var client = new CohereClient();
-        var request = new CohereRequest("/embed", Method.Post, authenticationCredentialsProviders);
+        var model = input.Model ?? "embed-english-v3.0";
+        var request = new CohereRequest("/embed", Method.Post, Creds);
         request.AddJsonBody(new
         {
-            Texts = new[] { input.FirstText, input.SecondText },
-            Model = model
+            texts = new[] { input.FirstText, input.SecondText },
+            model = model,
+            input_type = "search_document"
         });
 
-        var embeddings = await client.ExecuteWithErrorHandling<EmbeddingsDto>(request);
+        var embeddings = await Client.ExecuteWithErrorHandling<EmbeddingsDto>(request);
         var firstTextEmbedding = Vector<double>.Build.DenseOfArray(embeddings.Embeddings[0]);
         var secondTextEmbedding = Vector<double>.Build.DenseOfArray(embeddings.Embeddings[1]);
         var similarityScore = CalculateSimilarityScore(firstTextEmbedding, secondTextEmbedding);
@@ -375,129 +409,22 @@ public class Actions : Invocable
         return new CalculateTextsSimilarityResponse { SimilarityScore = similarityScoreInPercents };
     }
 
-    [Action("Classify text", Description =
-        "Classify text input. This action requires examples and their corresponding " +
-        "labels to be specified. Each unique label requires at least two examples " +
-        "associated with it.")]
-    public async Task<ClassifyTextsResponse> ClassifyText(
-        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
-        [ActionParameter] ClassifyTextsRequest input)
-    {
-        if (input.ExampleTexts.Count() != input.ExampleLabels.Count())
-            throw new Exception(
-                "The number of example texts should be equal to the number of example labels, so that " +
-                "each example has a corresponding label.");
-
-        var model = input.Model ?? "embed-english-v2.0";
-        var client = new CohereClient();
-        var request = new CohereRequest("/classify", Method.Post, authenticationCredentialsProviders);
-        request.AddJsonBody(new
-        {
-            Inputs = new[] { input.Text },
-            Examples = input.ExampleTexts.Zip(input.ExampleLabels, (text, label) => new { text, label }),
-            Model = model
-        });
-
-        var classifications = await client.ExecuteWithErrorHandling<ClassifyTextsResponseWrapper>(request);
-        return classifications.Classifications.First();
-    }
-
-    [Action("Classify text with examples as a file", Description = "Classify text input. This action requires a csv " +
-                                                                   "file with examples and their corresponding labels. " +
-                                                                   "Each file's line should have the form 'example, " +
-                                                                   "label'. Each unique label requires at least two " +
-                                                                   "examples associated with it.")]
-    public async Task<ClassifyTextsResponse> ClassifyTextWithFileExamples(
-        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
-        [ActionParameter] ClassifyTextWithFileExamplesRequest input)
-    {
-        async Task<IEnumerable<ClassificationExampleDto>> GetExamplesFromCsvFile(FileReference csvFile)
-        {
-            await using var stream = await _fileManagementClient.DownloadAsync(csvFile);
-            using var reader = new StreamReader(stream);
-            using var csvReader = new CsvReader(reader,
-                new CsvConfiguration(CultureInfo.InvariantCulture) { HasHeaderRecord = false });
-            var examples = csvReader.GetRecords<ClassificationExampleDto>().ToList();
-            return examples;
-        }
-
-        var model = input.Model ?? "embed-english-v2.0";
-        var fileExtension = input.CsvFileWithExamples.Name.Split(".")[^1];
-        if (fileExtension != "csv")
-            throw new Exception("Please provide csv file");
-
-        var client = new CohereClient();
-        var request = new CohereRequest("/classify", Method.Post, authenticationCredentialsProviders);
-        request.AddJsonBody(new
-        {
-            Inputs = new[] { input.Text },
-            Examples = (await GetExamplesFromCsvFile(input.CsvFileWithExamples))
-                .Select(item => new { text = item.Text, label = item.Label }),
-            Model = model
-        });
-
-        var classifications = await client.ExecuteWithErrorHandling<ClassifyTextsResponseWrapper>(request);
-        return classifications.Classifications.First();
-    }
-
-    [Action("Detect language", Description = "Detect the language of text provided.")]
-    public async Task<DetectLanguageResponse> DetectLanguage(
-        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
-        [ActionParameter] DetectLanguageRequest input)
-    {
-        var client = new CohereClient();
-        var request = new CohereRequest("/detect-language", Method.Post, authenticationCredentialsProviders);
-        request.AddJsonBody(new
-        {
-            Texts = new[] { input.Text }
-        });
-
-        var detection = await client.ExecuteWithErrorHandling<DetectLanguageResponseWrapper>(request);
-        return detection.Results.First();
-    }
-
-    [Action("Summarize text", Description = "Summarize the text provided.")]
-    public async Task<SummarizeTextResponse> SummarizeText(
-        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
-        [ActionParameter] SummarizeTextRequest input)
-    {
-        var model = input.Model ?? "summarize-xlarge";
-        var client = new CohereClient();
-        var request = new CohereRequest("/summarize", Method.Post, authenticationCredentialsProviders);
-        request.AddJsonBody(new
-        {
-            Text = input.Text,
-            Length = input.Length,
-            Format = input.Format,
-            Model = model,
-            Extractiveness = input.Extractiveness,
-            Temperature = input.Temperature ?? 0.75,
-            Additional_command = input.AdditionalCommand
-        });
-
-        var summary = await client.ExecuteWithErrorHandling<SummarizeTextResponse>(request);
-        return summary;
-    }
-
     [Action("Rerank texts", Description = "This action takes in a query and a list of texts and produces an ordered " +
                                           "list with each text assigned a relevance score.")]
-    public async Task<RerankTextsResponse> RerankTexts(
-        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
-        [ActionParameter] RerankTextsRequest input)
+    public async Task<RerankTextsResponse> RerankTexts([ActionParameter] RerankTextsRequest input)
     {
-        var model = input.Model ?? "rerank-multilingual-v2.0";
-        var client = new CohereClient();
-        var request = new CohereRequest("/rerank", Method.Post, authenticationCredentialsProviders);
+        var model = input.Model ?? "rerank-multilingual-v3.0";
+        var request = new CohereRequest("/rerank", Method.Post, Creds);
         request.AddJsonBody(new
         {
-            Query = input.Query,
-            Documents = input.Texts,
-            Model = model,
-            Top_n = input.TopN ?? input.Texts.Count(),
-            Return_documents = true
+            query = input.Query,
+            documents = input.Texts,
+            model = model,
+            top_n = input.TopN ?? input.Texts.Count(),
+            return_documents = true
         });
 
-        var rerankedTexts = await client.ExecuteWithErrorHandling<RerankedTextDtoWrapper>(request);
+        var rerankedTexts = await Client.ExecuteWithErrorHandling<RerankedTextDtoWrapper>(request);
 
         if (input.MinimumRelevanceScore != null)
             rerankedTexts.Results = rerankedTexts.Results.Where(t => t.RelevanceScore >= input.MinimumRelevanceScore);
@@ -509,9 +436,7 @@ public class Actions : Invocable
     [Action("Rerank texts provided in a file", Description = "This action takes in a query and a txt file with list " +
                                                              "of texts and produces a text combined from most relevant " +
                                                              "texts. Each text in the file must start on a new line.")]
-    public async Task<RerankTextsResponse> RerankTextsProvidedInFile(
-        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
-        [ActionParameter] RerankTextsProvidedInFileRequest input)
+    public async Task<RerankTextsResponse> RerankTextsProvidedInFile([ActionParameter] RerankTextsProvidedInFileRequest input)
     {
         async Task<List<string>> GetDocumentsFromFile(FileReference file)
         {
@@ -528,24 +453,28 @@ public class Actions : Invocable
             return documents;
         }
 
-        var model = input.Model ?? "rerank-multilingual-v2.0";
+        var model = input.Model ?? "rerank-multilingual-v3.0";
         var fileExtension = input.TxtFileWithTexts.Name.Split(".")[^1];
         if (fileExtension != "txt")
-            throw new Exception("Please provide txt file");
+            throw new PluginMisconfigurationException("Please provide txt file");
 
-        var client = new CohereClient();
-        var request = new CohereRequest("/rerank", Method.Post, authenticationCredentialsProviders);
+        var request = new CohereRequest("/rerank", Method.Post, Creds);
         var documents = await GetDocumentsFromFile(input.TxtFileWithTexts);
+        if (documents.Count == 0)
+            throw new PluginMisconfigurationException("The provided txt file has no valid lines.");
+
+        var topN = input.TopN > 0 ? input.TopN : documents.Count;
+
         request.AddJsonBody(new
         {
-            Query = input.Query,
-            Documents = documents,
-            Model = model,
-            Top_n = input.TopN,
-            Return_documents = true
+            query = input.Query,
+            documents = documents,
+            model = model,
+            top_n = topN,
+            return_documents = true
         });
 
-        var rerankedTexts = await client.ExecuteWithErrorHandling<RerankedTextDtoWrapper>(request);
+        var rerankedTexts = await Client.ExecuteWithErrorHandling<RerankedTextDtoWrapper>(request);
 
         if (input.MinimumRelevanceScore != null)
             rerankedTexts.Results = rerankedTexts.Results.Where(t => t.RelevanceScore >= input.MinimumRelevanceScore);
@@ -557,39 +486,33 @@ public class Actions : Invocable
     [Action("Generate embedding", Description = "Generate text embedding. An embedding is a list of floating point " +
                                                 "numbers that captures semantic information about the text that it " +
                                                 "represents.")]
-    public async Task<GenerateEmbeddingResponse> GenerateEmbedding(
-        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
-        [ActionParameter] GenerateEmbeddingRequest input)
+    public async Task<GenerateEmbeddingResponse> GenerateEmbedding([ActionParameter] GenerateEmbeddingRequest input)
     {
-        var model = input.Model ?? "embed-english-v2.0";
-        var client = new CohereClient();
-        var request = new CohereRequest("/embed", Method.Post, authenticationCredentialsProviders);
+        var model = input.Model ?? "embed-english-v3.0";
+        var request = new CohereRequest("/embed", Method.Post, Creds);
         request.AddJsonBody(new
         {
-            Texts = new[] { input.Text },
-            Model = model
+            texts = new[] { input.Text },
+            model = model,
         });
 
-        var embeddings = await client.ExecuteWithErrorHandling<GenerateEmbeddingResponseWrapper>(request);
+        var embeddings = await Client.ExecuteWithErrorHandling<GenerateEmbeddingResponseWrapper>(request);
         return new GenerateEmbeddingResponse { Embedding = embeddings.Embeddings.First() };
     }
 
     [Action("Tokenize text", Description = "Tokenize text. Specify model to ensure that the tokenization uses the " +
                                            "tokenizer used by specific model.")]
-    public async Task<TokenizeTextResponse> TokenizeText(
-        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
-        [ActionParameter] TokenizeTextRequest input)
+    public async Task<TokenizeTextResponse> TokenizeText([ActionParameter] TokenizeTextRequest input)
     {
-        var model = input.Model ?? "command";
-        var client = new CohereClient();
-        var request = new CohereRequest("/tokenize", Method.Post, authenticationCredentialsProviders);
+        var model = input.Model ?? "command-a-03-2025";
+        var request = new CohereRequest("/tokenize", Method.Post, Creds);
         request.AddJsonBody(new
         {
-            Text = input.Text,
-            Model = model
+            text = input.Text,
+            model = model
         });
 
-        var tokens = await client.ExecuteWithErrorHandling<TokenizeTextResponse>(request);
+        var tokens = await Client.ExecuteWithErrorHandling<TokenizeTextResponse>(request);
         return tokens;
     }
 }
