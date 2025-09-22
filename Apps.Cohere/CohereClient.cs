@@ -14,7 +14,7 @@ public class CohereClient : BlackBirdRestClient
     private static Uri GetBaseUrl() => new("https://api.cohere.ai/v1");
     
  
-    public virtual async Task<T> ExecuteWithErrorHandling<T>(RestRequest request)
+    public override async Task<T> ExecuteWithErrorHandling<T>(RestRequest request)
     {
         string content = (await ExecuteWithErrorHandling(request)).Content;
         T val = JsonConvert.DeserializeObject<T>(content, JsonSettings);
@@ -26,7 +26,7 @@ public class CohereClient : BlackBirdRestClient
         return val;
     }
 
-    public virtual async Task<RestResponse> ExecuteWithErrorHandling(RestRequest request)
+    public override async Task<RestResponse> ExecuteWithErrorHandling(RestRequest request)
     {
         RestResponse restResponse = await ExecuteAsync(request);
         if (!restResponse.IsSuccessStatusCode)
