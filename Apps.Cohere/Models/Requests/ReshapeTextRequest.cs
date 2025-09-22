@@ -21,6 +21,6 @@ public class ReshapeTextRequest
     [StaticDataSource(typeof(GenerateTextModelDataSourceHandler))]
     public string? Model { get; set; }
     
-    [DataSource(typeof(TemperatureDataSourceHandler))]
+    [StaticDataSource(typeof(TemperatureDataSourceHandler))]
     public float? Temperature { get; set; }
 }

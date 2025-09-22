@@ -10,6 +10,7 @@ using Blackbird.Filters.Enums;
 using Blackbird.Filters.Transformations;
 using RestSharp;
 using Blackbird.Filters.Extensions;
+using Blackbird.Applications.SDK.Blueprints;
 
 namespace Apps.Cohere.Actions;
 
@@ -24,6 +25,7 @@ public class TranslationActions : Invocable
         _fileManagementClient = fileManagementClient;
     }
 
+    [BlueprintActionDefinition(BlueprintAction.TranslateFile)]
     [Action("Translate", Description = "Translate a file ")]
     public async Task<FileTranslationResponse> Translate([ActionParameter] CohereTranslateFileRequest input)
     {
@@ -128,6 +130,7 @@ public class TranslationActions : Invocable
         return new FileTranslationResponse { File = xliffRef };
     }
 
+    [BlueprintActionDefinition(BlueprintAction.TranslateText)]
     [Action("Translate text", Description = "Translate input text with Command A Translate.")]
     public async Task<TranslateTextResponse> TranslateText([ActionParameter] TranslateTextRequest input)
     {
@@ -159,6 +162,5 @@ public class TranslationActions : Invocable
         var resp = await Client.ExecuteWithErrorHandling<TranslateTextResponse>(request);
         return new TranslateTextResponse { Text = resp.Text?.Trim() ?? string.Empty };
     }
-
 }
 

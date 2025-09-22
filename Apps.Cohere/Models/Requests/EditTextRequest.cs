@@ -18,22 +18,22 @@ public class EditTextRequest
     public string? Model { get; set; }
     
     [Display("Temperature (from 0.0 to 5.0)")]
-    [DataSource(typeof(TemperatureDataSourceHandler))]
+    [StaticDataSource(typeof(TemperatureDataSourceHandler))]
     public float? Temperature { get; set; }
     
     [Display("Top-k (from 0 to 500)")]
     public int? TopK { get; set; }
     
     [Display("Top-p (from 0.0 to 1.0)")]
-    [DataSource(typeof(TopPDataSourceHandler))]
+    [StaticDataSource(typeof(TopPDataSourceHandler))]
     public float? TopP { get; set; }
     
     [Display("Frequency penalty (from 0.0 to 1.0)")]
-    [DataSource(typeof(PenaltyDataSourceHandler))]
+    [StaticDataSource(typeof(PenaltyDataSourceHandler))]
     public float? FrequencyPenalty { get; set; }
     
     [Display("Presence penalty (from 0.0 to 1.0)")]
-    [DataSource(typeof(PenaltyDataSourceHandler))]
+    [StaticDataSource(typeof(PenaltyDataSourceHandler))]
     public float? PresencePenalty { get; set; }
     
     [Display("Stop sequences")]
