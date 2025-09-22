@@ -15,21 +15,14 @@ using Blackbird.Applications.SDK.Blueprints;
 namespace Apps.Cohere.Actions;
 
 [ActionList("Translation")]
-public class TranslationActions : Invocable
+public class TranslationActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
+    : Invocable(invocationContext)
 {
-    private readonly IFileManagementClient _fileManagementClient;
-
-    public TranslationActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : base(
-        invocationContext)
-    {
-        _fileManagementClient = fileManagementClient;
-    }
-
     [BlueprintActionDefinition(BlueprintAction.TranslateFile)]
     [Action("Translate", Description = "Translate a file ")]
     public async Task<FileTranslationResponse> Translate([ActionParameter] CohereTranslateFileRequest input)
     {
-        using var stream = await _fileManagementClient.DownloadAsync(input.File);
+        await using var stream = await fileManagementClient.DownloadAsync(input.File);
         var content = await Transformation.Parse(stream, input.File.Name);
         return await HandleCohereInteroperableTransformation(content, input);
     }
@@ -116,7 +109,7 @@ public class TranslationActions : Invocable
         if (outputMode == "original")
         {
             var targetContent = content.Target();
-            var outFile = await _fileManagementClient.UploadAsync(
+            var outFile = await fileManagementClient.UploadAsync(
                 targetContent.Serialize().ToStream(),
                 targetContent.OriginalMediaType ?? "application/octet-stream",
                 targetContent.OriginalName ?? input.File.Name);
@@ -126,7 +119,7 @@ public class TranslationActions : Invocable
 
         var xliff = content.Serialize();
         await using var memoryStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(xliff));
-        var xliffRef = await _fileManagementClient.UploadAsync(memoryStream, MediaTypes.Xliff, content.XliffFileName);
+        var xliffRef = await fileManagementClient.UploadAsync(memoryStream, MediaTypes.Xliff, content.XliffFileName);
         return new FileTranslationResponse { File = xliffRef };
     }
 
