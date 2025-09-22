@@ -17,16 +17,9 @@ using RestSharp;
 namespace Apps.Cohere.Actions;
 
 [ActionList("Chat")]
-public class ChatActions : Invocable
+public class ChatActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
+    : Invocable(invocationContext)
 {
-    private readonly IFileManagementClient _fileManagementClient;
-
-    public ChatActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : base(
-        invocationContext)
-    {
-        _fileManagementClient = fileManagementClient;
-    }
-
     [Action("Generate text", Description = "Generate realistic text conditioned on a given input.")]
     public async Task<GenerateTextResponse> GenerateText([ActionParameter] GenerateTextRequest input)
     {
@@ -409,7 +402,7 @@ public class ChatActions : Invocable
         {
             var documents = new List<string>();
 
-            await using var stream = await _fileManagementClient.DownloadAsync(file);
+            await using var stream = await fileManagementClient.DownloadAsync(file);
             using var reader = new StreamReader(stream);
             while (!reader.EndOfStream)
             {
