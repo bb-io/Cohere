@@ -1,17 +1,19 @@
 ﻿using Apps.Cohere.DataSourceHandlers;
 using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Dictionaries;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 
 namespace Apps.Cohere.Models.Requests;
 
 public class GenerateTextRequest
 {
+    [Display("Message")]
     public string Prompt { get; set; }
     
     [Display("Maximum number of tokens")]
     public int MaximumTokensNumber { get; set; }
     
-    [DataSource(typeof(GenerateTextModelDataSourceHandler))]
+    [StaticDataSource(typeof(GenerateTextModelDataSourceHandler))]
     public string? Model { get; set; }
     
     [Display("Temperature (from 0.0 to 5.0)")]
@@ -25,13 +27,13 @@ public class GenerateTextRequest
     [DataSource(typeof(TopPDataSourceHandler))]
     public float? TopP { get; set; }
     
-    [Display("Frequency penalty (from 0.0 to 1.0)")]
-    [DataSource(typeof(PenaltyDataSourceHandler))]
-    public float? FrequencyPenalty { get; set; }
+    //[Display("Frequency penalty (from 0.0 to 1.0)")]
+    //[DataSource(typeof(PenaltyDataSourceHandler))]
+    //public float? FrequencyPenalty { get; set; }
     
-    [Display("Presence penalty (from 0.0 to 1.0)")]
-    [DataSource(typeof(PenaltyDataSourceHandler))]
-    public float? PresencePenalty { get; set; }
+    //[Display("Presence penalty (from 0.0 to 1.0)")]
+    //[DataSource(typeof(PenaltyDataSourceHandler))]
+    //public float? PresencePenalty { get; set; }
     
     [Display("Stop sequences")]
     public IEnumerable<string>? StopSequences { get; set; }

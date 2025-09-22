@@ -1,25 +1,13 @@
-﻿using Blackbird.Applications.Sdk.Common;
+﻿using Blackbird.Applications.Sdk.Common.Dictionaries;
 using Blackbird.Applications.Sdk.Common.Dynamic;
-using Blackbird.Applications.Sdk.Common.Invocation;
 
 namespace Apps.Cohere.DataSourceHandlers;
 
-public class SummarizeModelDataSourceHandler : BaseInvocable, IDataSourceHandler
+public class SummarizeModelDataSourceHandler : IStaticDataSourceItemHandler
 {
-    public SummarizeModelDataSourceHandler(InvocationContext invocationContext) : base(invocationContext)
+    public IEnumerable<DataSourceItem> GetData() => new List<DataSourceItem>
     {
-    }
-
-    public Dictionary<string, string> GetData(DataSourceContext context)
-    {
-        var summarizeModels = new List<string>
-        {
-            "summarize-medium",
-            "summarize-xlarge"
-        };
-        
-        return summarizeModels
-            .Where(m => context.SearchString == null || m.Contains(context.SearchString, StringComparison.OrdinalIgnoreCase))
-            .ToDictionary(m => m, m => m);
-    }
+        new("summarize-medium", "summarize-medium"),
+        new("summarize-xlarge", "summarize-xlarge"),
+    };
 }

@@ -25,7 +25,7 @@ Before you can connect you need to make sure that:
 
 ![CohereBlackbirdConnection](image/README/CohereBlackbirdConnection.png)
 
-## Actions
+## Chat
 
 - **Analyze text** Analyze text to retrieve information about its style, mood and tone.
 - **Calculate similarity of two texts** Calculate the similarity of texts provided. The result of this action is a percentage similarity score. The higher the score, the more similar the texts are.
@@ -45,6 +45,10 @@ Before you can connect you need to make sure that:
 - **Summarize text** Summarize the text provided.
 - **Tokenize text** Tokenize text. Specify model to ensure that the tokenization uses the tokenizer used by specific model.
 
+### Translation
+
+- **Translate text** Translate text from one language to another. Specify source and target language.
+- **Translate** Translate file from one language to another.
 
 ## Feedback
 

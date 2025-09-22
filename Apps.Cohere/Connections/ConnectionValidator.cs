@@ -10,19 +10,18 @@ public class ConnectionValidator : IConnectionValidator
     public async ValueTask<ConnectionValidationResponse> ValidateConnection(
         IEnumerable<AuthenticationCredentialsProvider> authProviders, CancellationToken cancellationToken)
     {
-        var client = new CohereClient();
-        var request = new CohereRequest("/generate", Method.Post, authProviders)
+        var request = new CohereRequest("/chat", Method.Post, authProviders)
             .AddJsonBody(new
             {
-                Prompt = "Test",
-                Model = "command",
-                Max_tokens = 100,
-                Temperature = 0.75
+                message = "Test",
+                temperature = 0.3,
+                max_tokens = 8,
+                stream = false
             });
 
         try
         {
-            await client.ExecuteWithHandling<ExtractEntityFromTextResponseWrapper>(request);
+            await new CohereClient(authProviders).ExecuteWithErrorHandling<ExtractEntityFromTextResponseWrapper>(request);
 
             return new()
             {
