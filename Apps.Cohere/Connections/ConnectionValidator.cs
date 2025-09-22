@@ -21,7 +21,7 @@ public class ConnectionValidator : IConnectionValidator
 
         try
         {
-            await new CohereClient().ExecuteWithErrorHandling<ExtractEntityFromTextResponseWrapper>(request);
+            await new CohereClient(authProviders).ExecuteWithErrorHandling<ExtractEntityFromTextResponseWrapper>(request);
 
             return new()
             {

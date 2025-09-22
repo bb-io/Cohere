@@ -1,6 +1,8 @@
 ﻿using Apps.Cohere.Dtos;
 using Apps.Cohere.Extensions;
+using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Exceptions;
+using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Utils.RestSharp;
 using Newtonsoft.Json;
 using RestSharp;
@@ -9,7 +11,7 @@ namespace Apps.Cohere;
 
 public class CohereClient : BlackBirdRestClient
 {
-    public CohereClient() : base(new RestClientOptions { ThrowOnAnyError = false, BaseUrl = GetBaseUrl() }) { }
+    public CohereClient(IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders) : base(new RestClientOptions { ThrowOnAnyError = false, BaseUrl = GetBaseUrl() }) { }
 
     private static Uri GetBaseUrl() => new("https://api.cohere.ai/v1");
     

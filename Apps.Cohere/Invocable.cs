@@ -12,7 +12,7 @@ public class Invocable : BaseInvocable
     protected CohereClient Client { get; }
     public Invocable(InvocationContext invocationContext) : base(invocationContext)
     {
-        Client = new CohereClient();
+        Client = new CohereClient(invocationContext.AuthenticationCredentialsProviders);
     }
 }
 
