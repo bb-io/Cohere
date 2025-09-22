@@ -13,6 +13,6 @@ public class CohereRequest : BlackBirdRestRequest
 
     protected override void AddAuth(IEnumerable<AuthenticationCredentialsProvider> creds)
     {
-        this.AddHeader("Authorization", $"Bearer {creds.First(p => p.KeyName == "Authorization").Value}");
+        this.AddHeader("Authorization", $"{creds.First(p => p.KeyName == "Authorization").Value}");
     }
 }

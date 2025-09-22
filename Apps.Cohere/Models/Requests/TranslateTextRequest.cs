@@ -24,7 +24,7 @@ namespace Apps.Cohere.Models.Requests
         [Display("Maximum number of tokens")]
         public int? MaxTokens { get; set; }
 
-        [DataSource(typeof(GenerateTextModelDataSourceHandler))]
+        [StaticDataSource(typeof(GenerateTextModelDataSourceHandler))]
         public string? Model { get; set; }
     }
 }
