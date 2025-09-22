@@ -16,7 +16,7 @@
     <PackageReference Include="Blackbird.Filters" Version="1.1.22" />
     <PackageReference Include="CsvHelper" Version="30.0.1" />
     <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="RestSharp" Version="112.1.1-alpha.0.4" />
   </ItemGroup>
   <ItemGroup>
