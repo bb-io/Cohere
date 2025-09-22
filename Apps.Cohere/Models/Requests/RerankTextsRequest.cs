@@ -1,5 +1,6 @@
 ﻿using Apps.Cohere.DataSourceHandlers;
 using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Dictionaries;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 
 namespace Apps.Cohere.Models.Requests;
@@ -10,7 +11,7 @@ public class RerankTextsRequest
     
     public IEnumerable<string> Texts { get; set; } 
     
-    [DataSource(typeof(RerankModelDataSourceHandler))]
+    [StaticDataSource(typeof(RerankModelDataSourceHandler))]
     public string? Model { get; set; }
     
     [Display("Number of most relevant texts to include")]
