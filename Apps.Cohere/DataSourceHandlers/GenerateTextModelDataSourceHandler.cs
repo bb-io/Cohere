@@ -1,30 +1,20 @@
-﻿using Blackbird.Applications.Sdk.Common;
+﻿using Blackbird.Applications.Sdk.Common.Dictionaries;
 using Blackbird.Applications.Sdk.Common.Dynamic;
-using Blackbird.Applications.Sdk.Common.Invocation;
 
 namespace Apps.Cohere.DataSourceHandlers;
 
-public class GenerateTextModelDataSourceHandler : BaseInvocable, IDataSourceHandler
+public class GenerateTextModelDataSourceHandler : IStaticDataSourceItemHandler
 {
-    public GenerateTextModelDataSourceHandler(InvocationContext invocationContext) : base(invocationContext)
-    {
-    }
 
-    public Dictionary<string, string> GetData(DataSourceContext context)
+    public IEnumerable<DataSourceItem> GetData() => new List<DataSourceItem>
     {
-        var generateTextModels = new List<string>
-        {
-            "command-a-03-2025",
-            "command-r7b-12-2024",
-            "command-r-08-2024",
-            "command-r-plus-08-2024",
-            "command-a-translate-08-2025",
-            "command-a-reasoning-08-2025",
-            "command-a-vision-07-2025"
-        };
+        new("command-a-03-2025", "command-a-03-2025"),
+        new("command-r7b-12-2024", "command-r7b-12-2024"),
+        new("command-r-08-2024", "command-r-08-2024"),
+        new("command-r-plus-08-2024", "command-r-plus-08-2024"),
 
-        return generateTextModels
-            .Where(m => context.SearchString == null || m.Contains(context.SearchString, StringComparison.OrdinalIgnoreCase))
-            .ToDictionary(m => m, m => m);
-    }
+        new("command-a-translate-08-2025", "command-a-translate-08-2025"),
+        new("command-a-reasoning-08-2025", "command-a-reasoning-08-2025"),
+        new("command-a-vision-07-2025", "command-a-vision-07-2025"),
+    };
 }

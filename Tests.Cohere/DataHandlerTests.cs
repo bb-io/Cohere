@@ -1,4 +1,5 @@
-﻿using Blackbird.Applications.Sdk.Common.Dynamic;
+﻿using Apps.Cohere.DataSourceHandlers;
+using Blackbird.Applications.Sdk.Common.Dynamic;
 using Tests.Cohere.Base;
 
 namespace Tests.Cohere;
@@ -9,12 +10,12 @@ public class DataHandlerTests : TestBase
     [TestMethod]
     public async Task GenerateTextModelDataSourceHandler_IssSuccess()
     {
-        var handler = new Apps.Cohere.DataSourceHandlers.GenerateTextModelDataSourceHandler(InvocationContext);
-        var result = handler.GetData(new DataSourceContext { SearchString = "" });
+        var handler = new GenerateTextModelDataSourceHandler();
+        var result = handler.GetData();
 
         foreach (var item in result)
         {
-            Console.WriteLine($"{item.Key}: {item.Value}");
+            Console.WriteLine($"{item.DisplayName}: {item.Value}");
         }
         Assert.IsNotNull(result);
     }
