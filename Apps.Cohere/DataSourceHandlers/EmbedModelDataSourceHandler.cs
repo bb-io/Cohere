@@ -5,7 +5,6 @@ namespace Apps.Cohere.DataSourceHandlers;
 
 public class EmbedModelDataSourceHandler : IStaticDataSourceItemHandler
 {
-
     public IEnumerable<DataSourceItem> GetData() => new List<DataSourceItem>
     {
         new("embed-english-v3.0", "embed-english-v3.0"),

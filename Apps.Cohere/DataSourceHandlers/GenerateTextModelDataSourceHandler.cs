@@ -5,7 +5,6 @@ namespace Apps.Cohere.DataSourceHandlers;
 
 public class GenerateTextModelDataSourceHandler : IStaticDataSourceItemHandler
 {
-
     public IEnumerable<DataSourceItem> GetData() => new List<DataSourceItem>
     {
         new("command-a-03-2025", "command-a-03-2025"),
