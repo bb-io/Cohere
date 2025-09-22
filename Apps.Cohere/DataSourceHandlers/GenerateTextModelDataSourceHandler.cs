@@ -13,15 +13,16 @@ public class GenerateTextModelDataSourceHandler : BaseInvocable, IDataSourceHand
     public Dictionary<string, string> GetData(DataSourceContext context)
     {
         var generateTextModels = new List<string>
-        { 
-            "base", 
-            "base-light", 
-            "command", 
-            "command-light", 
-            "command-light-nightly", 
-            "command-nightly"
+        {
+            "command-a-03-2025",
+            "command-r7b-12-2024",
+            "command-r-08-2024",
+            "command-r-plus-08-2024",
+            "command-a-translate-08-2025",
+            "command-a-reasoning-08-2025",
+            "command-a-vision-07-2025"
         };
-        
+
         return generateTextModels
             .Where(m => context.SearchString == null || m.Contains(context.SearchString, StringComparison.OrdinalIgnoreCase))
             .ToDictionary(m => m, m => m);

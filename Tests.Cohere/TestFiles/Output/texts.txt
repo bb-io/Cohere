@@ -1,3 +1,0 @@
-Blackbird integrates your apps to automate localization workflows.
-A tasty recipe for apple pie with cinnamon.
-Tools that connect systems and reduce manual steps in translation projects.

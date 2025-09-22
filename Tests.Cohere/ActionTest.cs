@@ -1,4 +1,5 @@
 ﻿using Apps.Cohere;
+using Apps.Cohere.Actions;
 using Apps.Cohere.Models.Requests;
 using Newtonsoft.Json;
 using System.Text;
@@ -12,7 +13,7 @@ namespace Tests.Cohere
         [TestMethod]
         public async Task GenerateText_IssSuccess()
         {
-            var action = new Actions(InvocationContext, FileManager);
+            var action = new ChatActions(InvocationContext, FileManager);
 
             var result = await action.GenerateText(new Apps.Cohere.Models.Requests.GenerateTextRequest
             {
@@ -35,7 +36,7 @@ namespace Tests.Cohere
         [TestMethod]
         public async Task ExtractEntityFromText_ShouldReturnValue()
         {
-            var action = new Actions(InvocationContext, FileManager);
+            var action = new ChatActions(InvocationContext, FileManager);
 
             var input = new ExtractEntityFromTextRequest
             {
@@ -55,7 +56,7 @@ namespace Tests.Cohere
         [TestMethod]
         public async Task EditText_ShouldReturnEditedText()
         {
-            var action = new Actions(InvocationContext, FileManager);
+            var action = new ChatActions(InvocationContext, FileManager);
 
             var input = new EditTextRequest
             {
@@ -80,7 +81,7 @@ namespace Tests.Cohere
         [TestMethod]
         public async Task PerformGrammarAndSpellingCheck_ShouldReturnCorrectedText()
         {
-            var action = new Actions(InvocationContext, FileManager);
+            var action = new ChatActions(InvocationContext, FileManager);
 
             var input = new PerformGrammarAndSpellingCheckRequest
             {
@@ -98,7 +99,7 @@ namespace Tests.Cohere
         [TestMethod]
         public async Task AnalyzeText_ShouldReturnAnalysis()
         {
-            var action = new Actions(InvocationContext, FileManager);
+            var action = new ChatActions(InvocationContext, FileManager);
 
             var input = new AnalyzeTextRequest
             {
@@ -116,7 +117,7 @@ namespace Tests.Cohere
         [TestMethod]
         public async Task SummariseTextAnalyses_ShouldReturnSummary()
         {
-            var action = new Actions(InvocationContext, FileManager);
+            var action = new ChatActions(InvocationContext, FileManager);
 
             var input = new SummariseTextAnalysesRequest
             {
@@ -139,7 +140,7 @@ namespace Tests.Cohere
         [TestMethod]
         public async Task ReshapeText_ShouldReturnReshapedText()
         {
-            var action = new Actions(InvocationContext, FileManager);
+            var action = new ChatActions(InvocationContext, FileManager);
 
             var input = new ReshapeTextRequest
             {
@@ -160,7 +161,7 @@ namespace Tests.Cohere
         [TestMethod]
         public async Task DetectLocale_ShouldReturnLocale()
         {
-            var action = new Actions(InvocationContext, FileManager);
+            var action = new ChatActions(InvocationContext, FileManager);
 
             var input = new DetectLocaleRequest
             {
@@ -179,7 +180,7 @@ namespace Tests.Cohere
         [TestMethod]
         public async Task CalculateTextsSimilarity_ShouldReturnScore()
         {
-            var action = new Actions(InvocationContext, FileManager);
+            var action = new ChatActions(InvocationContext, FileManager);
 
             var input = new CalculateTextsSimilarityRequest
             {
@@ -197,7 +198,7 @@ namespace Tests.Cohere
         [TestMethod]
         public async Task RerankTexts_ShouldReturnOrderedTexts()
         {
-            var action = new Actions(InvocationContext, FileManager);
+            var action = new ChatActions(InvocationContext, FileManager);
 
             var input = new RerankTextsRequest
             {
@@ -223,7 +224,7 @@ namespace Tests.Cohere
         [TestMethod]
         public async Task RerankTextsProvidedInFile_ShouldReturnOrderedTexts()
         {
-            var action = new Actions(InvocationContext, FileManager);
+            var action = new ChatActions(InvocationContext, FileManager);
 
             var input = new RerankTextsProvidedInFileRequest
             {
@@ -241,5 +242,22 @@ namespace Tests.Cohere
             Assert.IsNotNull(result);
         }
 
+        [TestMethod]
+        public async Task Translate_ShouldReturnOrderedTexts()
+        {
+            var action = new TranslationActions(InvocationContext, FileManager);
+
+            var input = new CohereTranslateFileRequest
+            {
+                File= new Blackbird.Applications.Sdk.Common.Files.FileReference { Name = "contentful.html.xliff" },
+                TargetLanguage = "es",
+            };
+
+            var result = await action.Translate(input);
+
+            Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
+
+            Assert.IsNotNull(result);
+        }
     }
 }

@@ -290,3 +290,7 @@ __pycache__/
 
 /Apps.Cohere/ApplicationConstants.cs
 /Tests.Cohere/appsettings.json
+/Tests.Cohere/TestFiles/Input/contentful.html.xliff
+/Tests.Cohere/TestFiles/Input/contentful.htmlEmpty.xliff
+/Tests.Cohere/TestFiles/Input/test.xliff
+/Tests.Cohere/TestFiles/Input/translated.xliff

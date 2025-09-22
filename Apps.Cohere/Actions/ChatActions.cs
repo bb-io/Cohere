@@ -1,75 +1,43 @@
-﻿using System.Globalization;
-using Apps.Cohere.Dtos;
+﻿using Apps.Cohere.Dtos;
 using Apps.Cohere.Models.Requests;
 using Apps.Cohere.Models.Responses;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
-using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
-using CsvHelper;
-using CsvHelper.Configuration;
+using Blackbird.Filters.Constants;
+using Blackbird.Filters.Enums;
+using Blackbird.Filters.Extensions;
+using Blackbird.Filters.Transformations;
 using MathNet.Numerics.LinearAlgebra;
 using RestSharp;
 
-namespace Apps.Cohere;
+namespace Apps.Cohere.Actions;
 
-[ActionList]
-public class Actions : Invocable
+[ActionList("Chat")]
+public class ChatActions : Invocable
 {
     private readonly IFileManagementClient _fileManagementClient;
 
-    public Actions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : base(
+    public ChatActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : base(
         invocationContext)
     {
         _fileManagementClient = fileManagementClient;
-    }
-
-    [Action("Translate text", Description = "Translate input text with Command A Translate.")]
-    public async Task<TranslateTextResponse> TranslateText([ActionParameter] TranslateTextRequest input)
-    {
-        var model = input.Model ?? "command-a-translate-08-2025";
-
-        var format = input.PreserveFormatting == true
-            ? "Preserve original formatting, line breaks and inline punctuation."
-            : "You may normalize spacing if needed.";
-
-        var source = string.IsNullOrWhiteSpace(input.SourceLanguage)
-            ? ""
-            : $"Source language: {input.SourceLanguage}\n";
-
-        var prompt =
-            $"Translate the following text into {input.TargetLanguage}. {format}\n" +
-            $"{source}\n" +
-            "Return only the translation, with no additional words or labels.\n\n" +
-            $"Text:\n{input.Text}";
-
-        var request = new CohereRequest("/chat", Method.Post, Creds);
-        request.AddJsonBody(new
-        {
-            message = prompt,
-            model = model,
-            max_tokens = input.MaxTokens.GetValueOrDefault(1024),
-            temperature = 0.0f
-        });
-
-        var resp = await Client.ExecuteWithErrorHandling<TranslateTextResponse>(request);
-        return new TranslateTextResponse { Text = resp.Text?.Trim() ?? string.Empty };
     }
 
     [Action("Generate text", Description = "Generate realistic text conditioned on a given input.")]
     public async Task<GenerateTextResponse> GenerateText([ActionParameter] GenerateTextRequest input)
     {
         var model = input.Model ?? "command";
-        var request = new CohereRequest("/chat", Method.Post,Creds);
+        var request = new CohereRequest("/chat", Method.Post, Creds);
 
         request.AddJsonBody(new
         {
             message = input.Prompt,
-            model = model,
-            max_tokens = input.MaximumTokensNumber > 0 ? input.MaximumTokensNumber : 8,
+            model,
+            max_tokens = input.MaximumTokensNumber > 0 ? input.MaximumTokensNumber : 100,
             temperature = input.Temperature ?? 0.0f,
             k = input.TopK ?? 0,
             p = input.TopP ?? 1.0f,
@@ -82,8 +50,7 @@ public class Actions : Invocable
 
     [Action("Extract entity from text", Description = "Extract a piece of information from text. Provide entity that " +
                                                       "you want to extract from a text (e.g. product title).")]
-    public async Task<ExtractEntityFromTextResponse> ExtractEntityFromText(
-        [ActionParameter] ExtractEntityFromTextRequest input)
+    public async Task<ExtractEntityFromTextResponse> ExtractEntityFromText([ActionParameter] ExtractEntityFromTextRequest input)
     {
         var model = string.IsNullOrWhiteSpace(input.Model) ? "command-a-03-2025" : input.Model;
 
@@ -95,8 +62,8 @@ public class Actions : Invocable
         request.AddJsonBody(new
         {
             message = prompt,
-            model = model,
-            max_tokens = (input.MaximumTokensNumber ?? 100),
+            model,
+            max_tokens = input.MaximumTokensNumber ?? 100,
             temperature = input.Temperature ?? 0.0f,
         });
 
@@ -108,7 +75,7 @@ public class Actions : Invocable
         };
     }
 
-    [Action("Edit text", Description ="Edit the input text given an instruction prompt (e.g. make it more concise or " +
+    [Action("Edit text", Description = "Edit the input text given an instruction prompt (e.g. make it more concise or " +
                                       "make it more friendly).")]
     public async Task<EditTextResponse> EditText([ActionParameter] EditTextRequest input)
     {
@@ -125,7 +92,7 @@ public class Actions : Invocable
         request.AddJsonBody(new
         {
             message = prompt,
-            model = model,
+            model,
             max_tokens = input.MaximumTokensNumber,
             temperature = input.Temperature ?? 0.3f,
             k = input.TopK ?? 0,
@@ -139,7 +106,7 @@ public class Actions : Invocable
         return new EditTextResponse { Text = response.Text ?? string.Empty };
     }
 
-    [Action("Perform grammar and spelling check",Description = "Perform a grammar and spelling check of the text provided.")]
+    [Action("Perform grammar and spelling check", Description = "Perform a grammar and spelling check of the text provided.")]
     public async Task<PerformGrammarAndSpellingCheckResponse> PerformGrammarAndSpellingCheck([ActionParameter] PerformGrammarAndSpellingCheckRequest input)
     {
         async Task<int> GetTokensNumber(CohereClient client, string text, string model)
@@ -163,7 +130,7 @@ public class Actions : Invocable
             message =
                 $"Proofread the following text for grammar and spelling. " +
                 $"Return only the corrected text with no explanations.\n\nText:\n{input.Text}",
-            model = model,
+            model,
             max_tokens = maximumTokensNumber,
             temperature = 0.0f
         });
@@ -207,7 +174,7 @@ public class Actions : Invocable
         request.AddJsonBody(new
         {
             message = prompt,
-            model = model,
+            model,
             max_tokens = 100,
             temperature = 0.0f
         });
@@ -250,7 +217,7 @@ public class Actions : Invocable
         request.AddJsonBody(new
         {
             message = prompt,
-            model = model,
+            model,
             max_tokens = 150,
             temperature = 0.1f
         });
@@ -316,13 +283,13 @@ public class Actions : Invocable
 
                 Result:  
                 ";
-      
+
         var request = new CohereRequest("/chat", Method.Post, Creds);
 
         request.AddJsonBody(new
         {
             message = prompt,
-            model = model,
+            model,
             max_tokens = input.MaximumTokensNumber > 0 ? input.MaximumTokensNumber : 300,
             temperature = input.Temperature ?? 1.0f
         });
@@ -364,7 +331,7 @@ public class Actions : Invocable
         request.AddJsonBody(new
         {
             message = prompt,
-            model = model,
+            model,
             max_tokens = 16,
             temperature = 0.0f,
 
@@ -397,7 +364,7 @@ public class Actions : Invocable
         request.AddJsonBody(new
         {
             texts = new[] { input.FirstText, input.SecondText },
-            model = model,
+            model,
             input_type = "search_document"
         });
 
@@ -419,7 +386,7 @@ public class Actions : Invocable
         {
             query = input.Query,
             documents = input.Texts,
-            model = model,
+            model,
             top_n = input.TopN ?? input.Texts.Count(),
             return_documents = true
         });
@@ -468,8 +435,8 @@ public class Actions : Invocable
         request.AddJsonBody(new
         {
             query = input.Query,
-            documents = documents,
-            model = model,
+            documents,
+            model,
             top_n = topN,
             return_documents = true
         });
@@ -493,7 +460,7 @@ public class Actions : Invocable
         request.AddJsonBody(new
         {
             texts = new[] { input.Text },
-            model = model,
+            model,
         });
 
         var embeddings = await Client.ExecuteWithErrorHandling<GenerateEmbeddingResponseWrapper>(request);
@@ -509,7 +476,7 @@ public class Actions : Invocable
         request.AddJsonBody(new
         {
             text = input.Text,
-            model = model
+            model
         });
 
         var tokens = await Client.ExecuteWithErrorHandling<TokenizeTextResponse>(request);
