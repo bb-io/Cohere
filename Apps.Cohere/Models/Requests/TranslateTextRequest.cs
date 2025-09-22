@@ -2,10 +2,11 @@
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dictionaries;
 using Blackbird.Applications.Sdk.Common.Dynamic;
+using Blackbird.Applications.SDK.Blueprints.Interfaces.Translate;
 
 namespace Apps.Cohere.Models.Requests
 {
-    public class TranslateTextRequest
+    public class TranslateTextRequest : ITranslateTextInput
     {
         [Display("Text to translate")]
         public string Text { get; set; }

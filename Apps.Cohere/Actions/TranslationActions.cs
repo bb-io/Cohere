@@ -90,7 +90,7 @@ public class TranslationActions : Invocable
                 });
 
                 var resp = await Client.ExecuteWithErrorHandling<TranslateTextResponse>(request);
-                list.Add(resp.Text?.Trim() ?? string.Empty);
+                list.Add(resp.TranslatedText?.Trim() ?? string.Empty);
             }
 
             return list;
@@ -160,7 +160,7 @@ public class TranslationActions : Invocable
         });
 
         var resp = await Client.ExecuteWithErrorHandling<TranslateTextResponse>(request);
-        return new TranslateTextResponse { Text = resp.Text?.Trim() ?? string.Empty };
+        return new TranslateTextResponse { TranslatedText = resp.TranslatedText?.Trim() ?? string.Empty };
     }
 }
 

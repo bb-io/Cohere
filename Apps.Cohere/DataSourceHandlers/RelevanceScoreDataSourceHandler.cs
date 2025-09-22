@@ -6,9 +6,12 @@ using Blackbird.Applications.Sdk.Common.Invocation;
 
 namespace Apps.Cohere.DataSourceHandlers;
 
-public class RelevanceScoreDataSourceHandler : IStaticDataSourceItemHandler
+public class RelevanceScoreDataSourceHandler : IDataSourceItemHandler
 {
-    public IEnumerable<DataSourceItem> GetData() =>
-            ArrayExtensions.GenerateFormattedFloatArray(0.0f, 1.0f, 0.1f)
-                .Select(s => new DataSourceItem(s, s));
+    public IEnumerable<DataSourceItem> GetData(DataSourceContext context)
+    {
+        return ArrayExtensions
+            .GenerateFormattedFloatArray(0.0f, 1.0f, 0.1f)
+            .Select(s => new DataSourceItem(s, s));
+    }
 }

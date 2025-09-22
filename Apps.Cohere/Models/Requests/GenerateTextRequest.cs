@@ -17,14 +17,14 @@ public class GenerateTextRequest
     public string? Model { get; set; }
     
     [Display("Temperature (from 0.0 to 5.0)")]
-    [StaticDataSource(typeof(TemperatureDataSourceHandler))]
+    [DataSource(typeof(TemperatureDataSourceHandler))]
     public float? Temperature { get; set; }
     
     [Display("Top-k (from 0 to 500)")]
     public int? TopK { get; set; }
     
     [Display("Top-p (from 0.0 to 1.0)")]
-    [StaticDataSource(typeof(TopPDataSourceHandler))]
+    [DataSource(typeof(TopPDataSourceHandler))]
     public float? TopP { get; set; }
     
     //[Display("Frequency penalty (from 0.0 to 1.0)")]

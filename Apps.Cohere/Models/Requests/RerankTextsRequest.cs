@@ -18,6 +18,6 @@ public class RerankTextsRequest
     public int? TopN { get; set; }
     
     [Display("Minimum relevance score (from 0.0 to 1.0)")]
-    [StaticDataSource(typeof(RelevanceScoreDataSourceHandler))]
+    [DataSource(typeof(RelevanceScoreDataSourceHandler))]
     public float? MinimumRelevanceScore { get; set; }
 }

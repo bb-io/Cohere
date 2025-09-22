@@ -4,11 +4,12 @@ using Blackbird.Applications.Sdk.Common.Dictionaries;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.SDK.Blueprints.Handlers;
+using Blackbird.Applications.SDK.Blueprints.Interfaces.Translate;
 using System.Text.Json.Serialization;
 
 namespace Apps.Cohere.Models.Requests
 {
-    public class CohereTranslateFileRequest
+    public class CohereTranslateFileRequest : ITranslateFileInput
     {
         [Display("File")]
         public FileReference File { get; set; }

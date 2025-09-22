@@ -18,6 +18,6 @@ public class ExtractEntityFromTextRequest
     public string? Model { get; set; }
     
     [Display("Temperature (from 0.0 to 5.0)")]
-    [StaticDataSource(typeof(TemperatureDataSourceHandler))]
+    [DataSource(typeof(TemperatureDataSourceHandler))]
     public float? Temperature { get; set; }
 }

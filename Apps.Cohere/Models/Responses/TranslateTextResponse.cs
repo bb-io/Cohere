@@ -1,10 +1,11 @@
 ﻿using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.SDK.Blueprints.Interfaces.Translate;
 
 namespace Apps.Cohere.Models.Responses
 {
-    public class TranslateTextResponse
+    public class TranslateTextResponse : ITranslateTextOutput
     {
         [Display("Translation")]
-        public string Text { get; set; }
+        public string TranslatedText { get; set; }
     }
 }
