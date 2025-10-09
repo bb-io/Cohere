@@ -259,5 +259,23 @@ namespace Tests.Cohere
 
             Assert.IsNotNull(result);
         }
+
+        [TestMethod]
+        public async Task Translat_ShouldReturnOrderedTexts()
+        {
+            var action = new TranslationActions(InvocationContext, FileManager);
+
+            var input = new TranslateTextRequest
+            {
+                Text = "Hello, how are you?",
+                TargetLanguage = "es",
+            };
+
+            var result = await action.TranslateText(input);
+
+            Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
+
+            Assert.IsNotNull(result);
+        }
     }
 }
