@@ -10,7 +10,7 @@ public abstract class BaseModelDataSourceHandler(InvocationContext invocationCon
     protected virtual string? Endpoint => null;
 
     protected virtual bool ShouldIncludeModel(CohereModelDto model)
-        => Endpoint == null || model.Endpoints.Contains(Endpoint, StringComparer.OrdinalIgnoreCase);
+        => Endpoint == null || (model.Endpoints?.Contains(Endpoint, StringComparer.OrdinalIgnoreCase) ?? false);
 
     public async Task<IEnumerable<DataSourceItem>> GetDataAsync(DataSourceContext context, CancellationToken cancellationToken)
     {
@@ -26,5 +26,5 @@ public abstract class BaseModelDataSourceHandler(InvocationContext invocationCon
     }
 
     private bool IsDefaultForEndpoint(CohereModelDto model)
-        => Endpoint != null && model.DefaultEndpoints.Contains(Endpoint, StringComparer.OrdinalIgnoreCase);
+        => Endpoint != null && (model.DefaultEndpoints?.Contains(Endpoint, StringComparer.OrdinalIgnoreCase) ?? false);
 }

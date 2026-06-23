@@ -15,5 +15,5 @@ public class TokenizeModelDataSourceHandler(InvocationContext invocationContext)
     ];
 
     protected override bool ShouldIncludeModel(CohereModelDto model)
-        => model.Endpoints.Any(endpoint => SupportedEndpoints.Contains(endpoint, StringComparer.OrdinalIgnoreCase));
+        => model.Endpoints?.Any(endpoint => SupportedEndpoints.Contains(endpoint, StringComparer.OrdinalIgnoreCase)) ?? false;
 }

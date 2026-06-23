@@ -41,7 +41,8 @@ public class CohereClient : BlackBirdRestClient
             }
 
             var response = await ExecuteWithErrorHandling<CohereModelsResponse>(request);
-            models.AddRange(response.Models.Where(model => !model.IsDeprecated && !string.IsNullOrWhiteSpace(model.Name)));
+            models.AddRange((response.Models ?? [])
+                .Where(model => !model.IsDeprecated && !string.IsNullOrWhiteSpace(model.Name)));
             nextPageToken = response.NextPageToken;
         }
         while (!string.IsNullOrWhiteSpace(nextPageToken));
@@ -49,6 +50,7 @@ public class CohereClient : BlackBirdRestClient
         return models
             .GroupBy(model => model.Name, StringComparer.OrdinalIgnoreCase)
             .Select(group => group.First())
+            .OrderBy(model => model.Name, StringComparer.OrdinalIgnoreCase)
             .ToList();
     }
 
@@ -60,7 +62,7 @@ public class CohereClient : BlackBirdRestClient
         request.AddQueryParameter("page_size", "1000");
 
         var response = await ExecuteWithErrorHandling<CohereModelsResponse>(request);
-        var defaultModel = response.Models
+        var defaultModel = (response.Models ?? [])
             .FirstOrDefault(model => !model.IsDeprecated && !string.IsNullOrWhiteSpace(model.Name))
             ?.Name;
 
