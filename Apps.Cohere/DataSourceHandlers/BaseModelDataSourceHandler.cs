@@ -7,7 +7,10 @@ namespace Apps.Cohere.DataSourceHandlers;
 public abstract class BaseModelDataSourceHandler(InvocationContext invocationContext)
     : Invocable(invocationContext), IAsyncDataSourceItemHandler
 {
-    protected abstract string Endpoint { get; }
+    protected virtual string? Endpoint => null;
+
+    protected virtual bool ShouldIncludeModel(CohereModelDto model)
+        => Endpoint == null || model.Endpoints.Contains(Endpoint, StringComparer.OrdinalIgnoreCase);
 
     public async Task<IEnumerable<DataSourceItem>> GetDataAsync(DataSourceContext context, CancellationToken cancellationToken)
     {
@@ -15,6 +18,7 @@ public abstract class BaseModelDataSourceHandler(InvocationContext invocationCon
         var searchString = context.SearchString;
 
         return models
+            .Where(ShouldIncludeModel)
             .Where(model => searchString == null || model.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase))
             .OrderByDescending(IsDefaultForEndpoint)
             .ThenBy(model => model.Name, StringComparer.OrdinalIgnoreCase)
@@ -22,5 +26,5 @@ public abstract class BaseModelDataSourceHandler(InvocationContext invocationCon
     }
 
     private bool IsDefaultForEndpoint(CohereModelDto model)
-        => model.DefaultEndpoints.Contains(Endpoint, StringComparer.OrdinalIgnoreCase);
+        => Endpoint != null && model.DefaultEndpoints.Contains(Endpoint, StringComparer.OrdinalIgnoreCase);
 }

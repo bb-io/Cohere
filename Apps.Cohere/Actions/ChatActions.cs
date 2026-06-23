@@ -28,7 +28,7 @@ public class ChatActions(InvocationContext invocationContext, IFileManagementCli
 
     private Task<string> ResolveTokenizeModelAsync(string? model, CancellationToken cancellationToken = default)
         => string.IsNullOrWhiteSpace(model)
-            ? Client.ResolveDefaultModelAsync(CohereModelEndpoints.Tokenize, cancellationToken)
+            ? Client.ResolveDefaultModelAsync(CohereModelEndpoints.Chat, cancellationToken)
             : Task.FromResult(model);
 
     [Action("Generate text", Description = "Generate realistic text conditioned on a given input.")]
