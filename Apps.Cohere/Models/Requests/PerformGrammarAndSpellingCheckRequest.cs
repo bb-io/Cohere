@@ -8,6 +8,6 @@ public class PerformGrammarAndSpellingCheckRequest
 {
     public string Text { get; set; }
 
-    [StaticDataSource(typeof(GenerateTextModelDataSourceHandler))]
+    [DataSource(typeof(GenerateTextModelDataSourceHandler))]
     public string? Model { get; set; }
 }

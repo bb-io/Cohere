@@ -8,6 +8,6 @@ public class TokenizeTextRequest
 {
     public string Text { get; set; }
     
-    [StaticDataSource(typeof(TokenizeModelDataSourceHandler))]
+    [DataSource(typeof(TokenizeModelDataSourceHandler))]
     public string? Model { get; set; }
 }

@@ -14,6 +14,6 @@ public class ClassifyTextWithFileExamplesRequest
     [Display("Csv file with examples")]
     public FileReference CsvFileWithExamples { get; set; }
     
-    [StaticDataSource(typeof(EmbedModelDataSourceHandler))]
+    [DataSource(typeof(EmbedModelDataSourceHandler))]
     public string? Model { get; set; }
 }

@@ -294,3 +294,4 @@ __pycache__/
 /Tests.Cohere/TestFiles/Input/contentful.htmlEmpty.xliff
 /Tests.Cohere/TestFiles/Input/test.xliff
 /Tests.Cohere/TestFiles/Input/translated.xliff
+/Tests.Cohere/appsettings.json
