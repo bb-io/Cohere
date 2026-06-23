@@ -18,7 +18,7 @@ public class ReshapeTextRequest
     [Display("Additional instruction")]
     public string? AdditionalInstruction { get; set; }
     
-    [StaticDataSource(typeof(GenerateTextModelDataSourceHandler))]
+    [DataSource(typeof(GenerateTextModelDataSourceHandler))]
     public string? Model { get; set; }
     
     [DataSource(typeof(TemperatureDataSourceHandler))]

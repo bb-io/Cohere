@@ -16,6 +16,6 @@ public class ClassifyTextsRequest
     [Display("Example labels")]
     public IEnumerable<string> ExampleLabels { get; set; }
     
-    [StaticDataSource(typeof(EmbedModelDataSourceHandler))]
+    [DataSource(typeof(EmbedModelDataSourceHandler))]
     public string? Model { get; set; }
 }

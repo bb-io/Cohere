@@ -13,6 +13,6 @@ public class CalculateTextsSimilarityRequest
     [Display("Second text")]
     public string SecondText { get; set; }
     
-    [StaticDataSource(typeof(EmbedModelDataSourceHandler))]
+    [DataSource(typeof(EmbedModelDataSourceHandler))]
     public string? Model { get; set; }
 }

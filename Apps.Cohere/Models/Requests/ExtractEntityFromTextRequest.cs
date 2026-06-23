@@ -14,7 +14,7 @@ public class ExtractEntityFromTextRequest
     [Display("Maximum number of tokens")]
     public int? MaximumTokensNumber { get; set; }
     
-    [StaticDataSource(typeof(GenerateTextModelDataSourceHandler))]
+    [DataSource(typeof(GenerateTextModelDataSourceHandler))]
     public string? Model { get; set; }
     
     [Display("Temperature (from 0.0 to 5.0)")]

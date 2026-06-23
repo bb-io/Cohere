@@ -11,7 +11,7 @@ public class RerankTextsRequest
     
     public IEnumerable<string> Texts { get; set; } 
     
-    [StaticDataSource(typeof(RerankModelDataSourceHandler))]
+    [DataSource(typeof(RerankModelDataSourceHandler))]
     public string? Model { get; set; }
     
     [Display("Number of most relevant texts to include")]

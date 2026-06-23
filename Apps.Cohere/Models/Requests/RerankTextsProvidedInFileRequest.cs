@@ -16,7 +16,7 @@ public class RerankTextsProvidedInFileRequest
     [Display("Number of most relevant texts to include")]
     public int TopN { get; set; }
 
-    [StaticDataSource(typeof(RerankModelDataSourceHandler))]
+    [DataSource(typeof(RerankModelDataSourceHandler))]
     public string? Model { get; set; }
 
     [Display("Minimum relevance score (from 0.0 to 1.0)")]

@@ -1,4 +1,5 @@
-﻿using Apps.Cohere.Dtos;
+using Apps.Cohere.DataSourceHandlers;
+using Apps.Cohere.Dtos;
 using Apps.Cohere.Models.Requests;
 using Apps.Cohere.Models.Responses;
 using Blackbird.Applications.Sdk.Common;
@@ -20,10 +21,20 @@ namespace Apps.Cohere.Actions;
 public class ChatActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : Invocable(invocationContext)
 {
+    private Task<string> ResolveChatModelAsync(string? model, CancellationToken cancellationToken = default)
+        => string.IsNullOrWhiteSpace(model)
+            ? Client.ResolveDefaultModelAsync(CohereModelEndpoints.Chat, cancellationToken)
+            : Task.FromResult(model);
+
+    private Task<string> ResolveTokenizeModelAsync(string? model, CancellationToken cancellationToken = default)
+        => string.IsNullOrWhiteSpace(model)
+            ? Client.ResolveDefaultModelAsync(CohereModelEndpoints.Tokenize, cancellationToken)
+            : Task.FromResult(model);
+
     [Action("Generate text", Description = "Generate realistic text conditioned on a given input.")]
     public async Task<GenerateTextResponse> GenerateText([ActionParameter] GenerateTextRequest input)
     {
-        var model = input.Model ?? "command";
+        var model = await ResolveChatModelAsync(input.Model);
         var request = new CohereRequest("/chat", Method.Post, Creds);
 
         request.AddJsonBody(new
@@ -45,7 +56,7 @@ public class ChatActions(InvocationContext invocationContext, IFileManagementCli
                                                       "you want to extract from a text (e.g. product title).")]
     public async Task<ExtractEntityFromTextResponse> ExtractEntityFromText([ActionParameter] ExtractEntityFromTextRequest input)
     {
-        var model = string.IsNullOrWhiteSpace(input.Model) ? "command-a-03-2025" : input.Model;
+        var model = await ResolveChatModelAsync(input.Model);
 
         var request = new CohereRequest("/chat", Method.Post, Creds);
 
@@ -72,7 +83,7 @@ public class ChatActions(InvocationContext invocationContext, IFileManagementCli
                                       "make it more friendly).")]
     public async Task<EditTextResponse> EditText([ActionParameter] EditTextRequest input)
     {
-        var model = input.Model ?? "command-a-03-2025";
+        var model = await ResolveChatModelAsync(input.Model);
         var request = new CohereRequest("/chat", Method.Post, Creds);
 
         var prompt = $"Edit the following text to {input.Instruction} : {input.Text}";
@@ -114,7 +125,7 @@ public class ChatActions(InvocationContext invocationContext, IFileManagementCli
             return tokens.Tokens.Length;
         }
 
-        var model = input.Model ?? "command-a-03-2025";
+        var model = await ResolveChatModelAsync(input.Model);
 
         var maximumTokensNumber = await GetTokensNumber(Client, input.Text, model) + 20;
         var request = new CohereRequest("/chat", Method.Post, Creds);
@@ -138,7 +149,7 @@ public class ChatActions(InvocationContext invocationContext, IFileManagementCli
     [Action("Analyze text", Description = "Analyze text to retrieve information about its style, mood and tone.")]
     public async Task<AnalyzeTextResponse> AnalyzeText([ActionParameter] AnalyzeTextRequest input)
     {
-        var model = input.Model ?? "command-a-03-2025";
+        var model = await ResolveChatModelAsync(input.Model);
         var prompt = @$"
                 This is a few words description of style, mood and tone generator.
 
@@ -184,7 +195,7 @@ public class ChatActions(InvocationContext invocationContext, IFileManagementCli
         "texts to find common patterns in styles, moods and tones.")]
     public async Task<SummariseTextAnalysesResponse> SummariseTextAnalyses([ActionParameter] SummariseTextAnalysesRequest input)
     {
-        var model = input.Model ?? "command-a-03-2025";
+        var model = await ResolveChatModelAsync(input.Model);
         var analyses = input.TextAnalyses != null ? string.Join("\n", input.TextAnalyses) : string.Empty;
         var prompt = @$"
                 This is a common patterns in styles, moods and tones analyser.
@@ -226,7 +237,7 @@ public class ChatActions(InvocationContext invocationContext, IFileManagementCli
         Description = "Reshape the text. Provide the information about target style, mood and tone.")]
     public async Task<ReshapeTextResponse> ReshapeText([ActionParameter] ReshapeTextRequest input)
     {
-        var model = input.Model ?? "command-a-03-2025";
+        var model = await ResolveChatModelAsync(input.Model);
         var additionalInstruction = input.AdditionalInstruction ?? "";
         var prompt = @$"
                 This is a rewriter of the input text which reshapes the text so that it matches the target style, mood, and tone.
@@ -297,7 +308,7 @@ public class ChatActions(InvocationContext invocationContext, IFileManagementCli
     [Action("Detect locale", Description = "Detect locale of the text provided.")]
     public async Task<DetectLocaleResponse> DetectLocale([ActionParameter] DetectLocaleRequest input)
     {
-        var model = input.Model ?? "command-a-03-2025";
+        var model = await ResolveChatModelAsync(input.Model);
         var prompt = @$"
                 This is a locale detector.
 
@@ -464,7 +475,7 @@ public class ChatActions(InvocationContext invocationContext, IFileManagementCli
                                            "tokenizer used by specific model.")]
     public async Task<TokenizeTextResponse> TokenizeText([ActionParameter] TokenizeTextRequest input)
     {
-        var model = input.Model ?? "command-a-03-2025";
+        var model = await ResolveTokenizeModelAsync(input.Model);
         var request = new CohereRequest("/tokenize", Method.Post, Creds);
         request.AddJsonBody(new
         {
