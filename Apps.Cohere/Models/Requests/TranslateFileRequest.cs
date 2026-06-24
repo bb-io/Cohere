@@ -34,6 +34,10 @@ namespace Apps.Cohere.Models.Requests
         [Display("Max tokens")]
         public int? MaxTokens { get; set; }
 
+        [Display("Model")]
+        [DataSource(typeof(GenerateTextModelDataSourceHandler))]
+        public string? Model { get; set; }
+
         [Display("Output file handling"), StaticDataSource(typeof(ProcessFileFormatHandler))]
         public string? OutputFileHandling { get; set; }
     }
