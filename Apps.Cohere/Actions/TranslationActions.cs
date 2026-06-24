@@ -71,7 +71,7 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
                     "Return only the translation, with no extra words or labels.\n\n" +
                     $"Text:\n{srcText}";
 
-                var model = "command-a-translate-08-2025";
+                var model = input.Model ?? "command-a-translate-08-2025";
 
                 var request = new CohereRequest("/chat", Method.Post, Creds);
                 request.AddJsonBody(new
