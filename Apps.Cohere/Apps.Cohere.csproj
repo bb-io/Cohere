@@ -5,16 +5,16 @@
     <Nullable>enable</Nullable>
     <Product>Cohere</Product>
     <Description>Provides access to large language models that can be used for a variety of tasks such as generating text, answering questions, and summarizing text</Description>
-    <Version>1.0.8</Version>
+    <Version>1.1.0</Version>
     <AssemblyName>Apps.Cohere</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Blackbird.Applications.SDK.Blueprints" Version="1.0.0-rc.10308" />
-    <PackageReference Include="Blackbird.Applications.SDK.Extensions.FileManagement" Version="1.0.1" />
+    <PackageReference Include="Blackbird.Ai" Version="1.1.1" />
+    <PackageReference Include="Blackbird.Applications.SDK.Blueprints" Version="1.0.1" />
+    <PackageReference Include="Blackbird.Applications.SDK.Extensions.FileManagement" Version="1.1.0" />
     <PackageReference Include="Blackbird.Applications.Sdk.Utils" Version="1.0.26" />
-    <PackageReference Include="Blackbird.Filters" Version="1.1.22" />
-    <PackageReference Include="CsvHelper" Version="30.0.1" />
     <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
+    <PackageReference Include="Polly" Version="8.5.2" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource CopyToOutputDirectory="Always" Include="image\icon.png" />

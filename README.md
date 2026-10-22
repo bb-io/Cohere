@@ -29,11 +29,8 @@ Before you can connect you need to make sure that:
 
 - **Analyze text** Analyze text to retrieve information about its style, mood and tone.
 - **Calculate similarity of two texts** Calculate the similarity of texts provided. The result of this action is a percentage similarity score. The higher the score, the more similar the texts are.
-- **Classify text** Classify text input. This action requires examples and their corresponding labels to be specified. Each unique label requires at least two examples associated with it.
-- **Classify text with examples as a file** Classify text input. This action requires a csv file with examples and their corresponding labels. Each file's line should have the form 'example, label'. Each unique label requires at least two examples associated with it.
-- **Detect language** Detect the language of text provided.
 - **Detect locale** Detect locale of the text provided.
-- **Edit text** Edit the input text given an instruction prompt (e.g. make it more concise or make it more friendly).
+- **Rewrite text** Rewrite the input text given an instruction prompt (e.g. make it more concise or make it more friendly). This action was called "Edit text" before; existing Birds keep working.
 - **Extract entity from text** Extract a piece of information from text. Provide entity that you want to extract from a text (e.g. product title).
 - **Generate embedding** Generate text embedding. An embedding is a list of floating point numbers that captures semantic information about the text that it represents.
 - **Generate text** Generate realistic text conditioned on a given input.
@@ -42,13 +39,34 @@ Before you can connect you need to make sure that:
 - **Rerank texts provided in a file** This action takes in a query and a txt file with list of texts and produces a text combined from most relevant texts. Each text in the file must start on a new line.
 - **Reshape text** Reshape the text. Provide the information about target style, mood and tone.
 - **Summarise text analyses** Summarise information about styles, moods and tones of different texts to find common patterns in styles, moods and tones.
-- **Summarize text** Summarize the text provided.
 - **Tokenize text** Tokenize text. Specify model to ensure that the tokenization uses the tokenizer used by specific model.
 
 ### Translation
 
-- **Translate text** Translate text from one language to another. Specify source and target language.
-- **Translate** Translate file from one language to another.
+- **Translate** Translate file content retrieved from a CMS or file storage. Only segments without a translation are translated. Supports a glossary, additional instructions, tone and an optional document summary.
+- **Translate text** Translate text from one language to another. The source language is detected when it is not set.
+
+### Editing
+
+- **Edit** Edit a translated file. Translated segments are post-edited and set to reviewed.
+- **Edit text** Review translated text and return an edited version.
+
+### Review
+
+- **Review** Score each translated segment of a file from 0 to 1. Segments at or above the score threshold (default 0.8) are set to final.
+- **Review text** Score the quality of a translated text from 0 to 1.
+
+### Shortening
+
+- **Shorten content** Shorten translated file content to fit the size restrictions of its units or the maximum length.
+- **Shorten text** Shorten text to fit the maximum length.
+
+### Summarizing
+
+- **Summarize** Summarize file content for a target audience and language. Translated content is summarized from its translation.
+- **Summarize text** Summarize text for a target audience and language.
+
+All actions above run on the Blackbird AI engine: requests are split into token-aware batches, failed or truncated answers are retried, and warnings are written to the flight log. When the default model is not changed, translation actions use `command-a-translate-08-2025` and the other actions use Cohere's default chat model. Requests that hit the Cohere rate limit are retried automatically.
 
 ## Feedback
 

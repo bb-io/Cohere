@@ -1,33 +1,32 @@
 ﻿using Apps.Cohere.DataSourceHandlers;
 using Blackbird.Applications.Sdk.Common;
-using Blackbird.Applications.Sdk.Common.Dictionaries;
 using Blackbird.Applications.Sdk.Common.Dynamic;
+using Blackbird.Applications.Sdk.Common.Files;
 
 namespace Apps.Cohere.Models.Requests;
 
 public class SummarizeTextRequest
 {
-    [Display("Text to summarize")]
-    public string Text { get; set; }
-    
-    [Display("Length")]
-    [StaticDataSource(typeof(SummaryLengthDataSourceHandler))]
-    public string? Length { get; set; }
-    
-    [Display("Format")]
-    [StaticDataSource(typeof(SummaryFormatDataSourceHandler))]
-    public string? Format { get; set; } 
-    
-    [StaticDataSource(typeof(SummarizeModelDataSourceHandler))]
+    [Display("Text")]
+    public string Text { get; set; } = string.Empty;
+
+    [Display("Model", Description = "This parameter controls which Cohere model answers your request. By default, the default Cohere chat model.")]
+    [DataSource(typeof(GenerateTextModelDataSourceHandler))]
     public string? Model { get; set; }
-    
-    [Display("Extractiveness")]
-    [StaticDataSource(typeof(SummaryExtractivenessDataSourceHandler))]
-    public string? Extractiveness { get; set; }
-    
-    [DataSource(typeof(TemperatureDataSourceHandler))]
-    public float? Temperature { get; set; }
-    
-    [Display("Additional command")]
-    public string? AdditionalCommand { get; set; }
+
+    [Display("Language", Description = "Language of the summary. By default, the language of the content.")]
+    [DataSource(typeof(LocaleDataSourceHandler))]
+    public string? Language { get; set; }
+
+    [Display("Maximum words", Description = "Maximum number of words of the summary.")]
+    public int? MaximumWords { get; set; }
+
+    [Display("Target audience")]
+    public string? TargetAudience { get; set; }
+
+    [Display("Additional instructions", Description = "Specify additional instructions for the summary. For example: 'Use bullet points.'")]
+    public string? AdditionalInstructions { get; set; }
+
+    [Display("Glossary")]
+    public FileReference? Glossary { get; set; }
 }

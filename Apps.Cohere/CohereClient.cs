@@ -1,15 +1,34 @@
+using System.Globalization;
+using System.Net;
 using Apps.Cohere.Dtos;
-using Apps.Cohere.Extensions;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Utils.RestSharp;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Polly;
+using Polly.Retry;
 using RestSharp;
 
 namespace Apps.Cohere;
 
 public class CohereClient : BlackBirdRestClient
 {
+    private const string ChatUrl = "https://api.cohere.ai/v2/chat";
+
+    private static readonly ResiliencePipeline<RestResponse> RateLimitPipeline = new ResiliencePipelineBuilder<RestResponse>()
+        .AddRetry(new RetryStrategyOptions<RestResponse>
+        {
+            MaxRetryAttempts = 5,
+            Delay = TimeSpan.FromSeconds(2),
+            BackoffType = DelayBackoffType.Exponential,
+            UseJitter = true,
+            ShouldHandle = new PredicateBuilder<RestResponse>()
+                .HandleResult(response => response.StatusCode == HttpStatusCode.TooManyRequests),
+            DelayGenerator = args => ValueTask.FromResult(RetryAfter(args.Outcome.Result))
+        })
+        .Build();
+
     private readonly AuthenticationCredentialsProvider[] _credentials;
 
     public CohereClient(IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders)
@@ -18,7 +37,8 @@ public class CohereClient : BlackBirdRestClient
         _credentials = authenticationCredentialsProviders.ToArray();
     }
 
-    private static Uri GetBaseUrl() => new("https://api.cohere.ai/v1");
+    public Task<ChatResponseDto> ChatAsync(string body) =>
+        ExecuteWithErrorHandling<ChatResponseDto>(new CohereRequest(ChatUrl, Method.Post, _credentials).AddJsonBody(body));
 
     public async Task<IReadOnlyList<CohereModelDto>> ListModelsAsync(string? endpoint = null, CancellationToken cancellationToken = default)
     {
@@ -87,7 +107,7 @@ public class CohereClient : BlackBirdRestClient
         T val = JsonConvert.DeserializeObject<T>(content, JsonSettings);
         if (val == null)
         {
-            throw new Exception($"Could not parse {content} to {typeof(T)}");
+            throw new PluginApplicationException($"Could not parse {content} to {typeof(T)}");
         }
 
         return val;
@@ -95,7 +115,9 @@ public class CohereClient : BlackBirdRestClient
 
     public override async Task<RestResponse> ExecuteWithErrorHandling(RestRequest request)
     {
-        RestResponse restResponse = await ExecuteAsync(request);
+        var restResponse = await RateLimitPipeline.ExecuteAsync(
+            async cancellationToken => await ExecuteAsync(request, cancellationToken));
+
         if (!restResponse.IsSuccessStatusCode)
         {
             throw ConfigureErrorException(restResponse);
@@ -104,9 +126,27 @@ public class CohereClient : BlackBirdRestClient
         return restResponse;
     }
 
-    protected override Exception ConfigureErrorException(RestResponse response)
+    protected override Exception ConfigureErrorException(RestResponse response) =>
+        new PluginApplicationException(ErrorMessage(response.Content)
+            ?? $"Status code: {(int)response.StatusCode}, Content: {response.Content}");
+
+    private static string? ErrorMessage(string? content)
     {
-        var error = JsonConvert.DeserializeObject(response.Content!)!;
-        throw new PluginApplicationException(error.ToString() ?? response.Content);
+        try
+        {
+            return JObject.Parse(content ?? string.Empty)["message"]?.ToString();
+        }
+        catch (JsonReaderException)
+        {
+            return null;
+        }
     }
+    
+    private static Uri GetBaseUrl() => new("https://api.cohere.ai/v1");
+
+    private static TimeSpan? RetryAfter(RestResponse? response) =>
+        response?.Headers?.FirstOrDefault(header => string.Equals(header.Name, "Retry-After", StringComparison.OrdinalIgnoreCase))?.Value?.ToString() is { } value
+        && double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var seconds)
+            ? TimeSpan.FromSeconds(Math.Min(seconds, 60))
+            : null;
 }

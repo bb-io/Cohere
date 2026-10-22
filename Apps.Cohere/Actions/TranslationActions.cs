@@ -1,159 +1,88 @@
-﻿using Apps.Cohere.Models.Requests;
+﻿using Apps.Cohere.Ai;
+using Apps.Cohere.Models.Requests;
 using Apps.Cohere.Models.Responses;
-using Blackbird.Applications.Sdk.Common.Actions;
-using Blackbird.Applications.Sdk.Common.Exceptions;
+using Blackbird.Ai.Files.Models;
+using Blackbird.Ai.Summary.Models;
+using Blackbird.Ai.Text.Models;
 using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Invocation;
-using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
-using Blackbird.Filters.Constants;
-using Blackbird.Filters.Enums;
-using Blackbird.Filters.Transformations;
-using RestSharp;
-using Blackbird.Filters.Extensions;
 using Blackbird.Applications.SDK.Blueprints;
+using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 
 namespace Apps.Cohere.Actions;
 
 [ActionList("Translation")]
 public class TranslationActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
-    : Invocable(invocationContext)
+    : BaseActions(invocationContext, fileManagementClient)
 {
+    private const string DefaultTranslationModel = "command-a-translate-08-2025";
+
     [BlueprintActionDefinition(BlueprintAction.TranslateFile)]
-    [Action("Translate", Description = "Translate a file ")]
+    [Action("Translate", Description = "Translate file content retrieved from a CMS or file storage")]
     public async Task<FileTranslationResponse> Translate([ActionParameter] CohereTranslateFileRequest input)
     {
-        await using var stream = await fileManagementClient.DownloadAsync(input.File);
-        var content = await Transformation.Parse(stream, input.File.Name);
-        return await HandleCohereInteroperableTransformation(content, input);
-    }
+        var model = await ResolveModelAsync(input.Model, DefaultTranslationModel);
+        var client = CreateLlmClient(model, new(MaxTokens: input.MaxTokens));
+        var processor = CreateContentProcessor(client, model, input.BucketSize);
 
-    private async Task<FileTranslationResponse> HandleCohereInteroperableTransformation(
-        Transformation content, CohereTranslateFileRequest input)
-    {
-        content.SourceLanguage ??= input.SourceLanguage;
-        content.TargetLanguage ??= input.TargetLanguage;
+        await using var file = await FileManagementClient.DownloadAsync(input.File);
+        await using var glossaryFile = await DownloadOptionalAsync(input.Glossary);
 
-        if (string.IsNullOrWhiteSpace(content.TargetLanguage))
-            throw new PluginMisconfigurationException("Target language is required.");
-
-        async Task<IEnumerable<string>> BatchTranslate(IEnumerable<Segment> batch)
+        var result = await AiAdapters.Mapped(() => processor.TranslateAsync(new TranslateStreamOptions
         {
-            var list = new List<string>();
+            File = file,
+            FileName = input.File.Name,
+            MediaType = input.File.ContentType,
+            SourceLanguage = input.SourceLanguage,
+            TargetLanguage = input.TargetLanguage,
+            OutputFileHandling = input.OutputFileHandling,
+            GlossaryTbx = glossaryFile,
+            AdditionalInstructions = Instructions(null, input.Instructions, input.Tone),
+            Summary = SummaryOptions.FromToggle(input.GenerateDocumentSummary)
+        }));
 
-            foreach (var seg in batch)
-            {
-                var srcText = seg.GetSource();
-                if (string.IsNullOrWhiteSpace(srcText))
-                {
-                    list.Add(srcText ?? string.Empty);
-                    continue;
-                }
+        var content = result.Content;
 
-                var preserve = input.PreserveFormatting == true
-                    ? "Preserve original formatting and line breaks."
-                    : "You may normalize spacing if needed.";
-
-                var srcLangLine = string.IsNullOrWhiteSpace(content.SourceLanguage)
-                    ? "" : $"Source language: {content.SourceLanguage}\n";
-
-                var toneLine = string.IsNullOrWhiteSpace(input.Tone)
-                    ? "" : $"Tone: {input.Tone}\n";
-
-                var instLine = string.IsNullOrWhiteSpace(input.Instructions)
-                    ? "" : $"Additional instructions: {input.Instructions}\n";
-
-                var prompt =
-                    $"Translate the following text into {content.TargetLanguage}.\n" +
-                    $"{preserve}\n" +
-                    $"{srcLangLine}" +
-                    $"{toneLine}" +
-                    $"{instLine}" +
-                    "Return only the translation, with no extra words or labels.\n\n" +
-                    $"Text:\n{srcText}";
-
-                var model = input.Model ?? "command-a-translate-08-2025";
-
-                var request = new CohereRequest("/chat", Method.Post, Creds);
-                request.AddJsonBody(new
-                {
-                    message = prompt,
-                    model = model,
-                    max_tokens = input.MaxTokens.GetValueOrDefault(1024),
-                    temperature = 0.0f
-                });
-
-                var resp = await Client.ExecuteWithErrorHandling<TranslateTextResponse>(request);
-                list.Add(resp.TranslatedText?.Trim() ?? string.Empty);
-            }
-
-            return list;
-        }
-
-        var segments = content.GetSegments()
-            .Where(s => !s.IsIgnorbale && s.IsInitial)
-            .ToList();
-
-        var segmentTranslations = await segments.Batch(100).Process(BatchTranslate);
-
-        foreach (var (segment, translated) in segmentTranslations)
+        return new FileTranslationResponse
         {
-            if (!string.IsNullOrEmpty(translated))
-            {
-                segment.SetTarget(translated);
-                segment.State = SegmentState.Translated;
-            }
-        }
-
-        var outputMode = (input.OutputFileHandling ?? "").ToLowerInvariant();
-
-        if (outputMode == "original")
-        {
-            var targetContent = content.Target();
-            var outFile = await fileManagementClient.UploadAsync(
-                targetContent.Serialize().ToStream(),
-                targetContent.OriginalMediaType ?? "application/octet-stream",
-                targetContent.OriginalName ?? input.File.Name);
-
-            return new FileTranslationResponse { File = outFile };
-        }
-
-        var xliff = content.Serialize();
-        await using var memoryStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(xliff));
-        var xliffRef = await fileManagementClient.UploadAsync(memoryStream, MediaTypes.Xliff, content.XliffFileName);
-        return new FileTranslationResponse { File = xliffRef };
+            File = await UploadAsync(result.File),
+            TotalSegmentsCount = content.TotalSegments,
+            TotalTranslatable = content.ProcessableSegments,
+            TargetsUpdatedCount = content.UpdatedSegments,
+            ProcessedBatchesCount = content.BucketsProcessed,
+            SystemPrompt = content.SystemPrompt,
+            Usage = ToUsage(content.Usage)
+        };
     }
 
     [BlueprintActionDefinition(BlueprintAction.TranslateText)]
-    [Action("Translate text", Description = "Translate input text with Command A Translate.")]
+    [Action("Translate text", Description = "Localize the text provided.")]
     public async Task<TranslateTextResponse> TranslateText([ActionParameter] TranslateTextRequest input)
     {
-        var model = input.Model ?? "command-a-translate-08-2025";
+        var model = await ResolveModelAsync(input.Model, DefaultTranslationModel);
+        var client = CreateLlmClient(model, new(MaxTokens: input.MaxTokens));
+        var processor = CreateTextProcessor(client, model);
 
-        var format = input.PreserveFormatting == true
-            ? "Preserve original formatting, line breaks and inline punctuation."
-            : "You may normalize spacing if needed.";
+        await using var glossaryFile = await DownloadOptionalAsync(input.Glossary);
 
-        var source = string.IsNullOrWhiteSpace(input.SourceLanguage)
-            ? ""
-            : $"Source language: {input.SourceLanguage}\n";
-
-        var prompt =
-            $"Translate the following text into {input.TargetLanguage}. {format}\n" +
-            $"{source}\n" +
-            "Return only the translation, with no additional words or labels.\n\n" +
-            $"Text:\n{input.Text}";
-
-        var request = new CohereRequest("/chat", Method.Post, Creds);
-        request.AddJsonBody(new
+        var result = await AiAdapters.Mapped(() => processor.TranslateAsync(new TranslateTextOptions
         {
-            message = prompt,
-            model = model,
-            max_tokens = input.MaxTokens.GetValueOrDefault(1024),
-            temperature = 0.0f
-        });
+            Text = input.Text,
+            SourceLanguage = input.SourceLanguage,
+            TargetLanguage = input.TargetLanguage,
+            AdditionalInstructions = input.AdditionalInstructions,
+            GlossaryTbx = glossaryFile
+        }));
 
-        var resp = await Client.ExecuteWithErrorHandling<TranslateTextResponse>(request);
-        return new TranslateTextResponse { TranslatedText = resp.TranslatedText?.Trim() ?? string.Empty };
+        ThrowIfUnresolved(result.Content);
+
+        return new TranslateTextResponse
+        {
+            TranslatedText = result.Text,
+            SystemPrompt = result.Content.SystemPrompt ?? string.Empty,
+            UserPrompt = UserPrompt(result.Content),
+            Usage = ToUsage(result.Content.Usage)
+        };
     }
 }
-
