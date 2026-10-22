@@ -79,8 +79,8 @@ public class ChatActions(InvocationContext invocationContext, IFileManagementCli
         };
     }
 
-    [Action("Edit text", Description = "Edit the input text given an instruction prompt (e.g. make it more concise or " +
-                                      "make it more friendly).")]
+    [Action("Rewrite text", Description = "Rewrite the input text given an instruction prompt (e.g. make it more concise or " +
+                                         "make it more friendly).")]
     public async Task<EditTextResponse> EditText([ActionParameter] EditTextRequest input)
     {
         var model = await ResolveChatModelAsync(input.Model);
