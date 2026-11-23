@@ -43,7 +43,7 @@ Before you can connect you need to make sure that:
 
 ### Translation
 
-- **Translate** Translate file content retrieved from a CMS or file storage. Only segments without a translation are translated. Supports a glossary, additional instructions, tone and an optional document summary.
+- **Translate** Translate file content retrieved from a CMS or file storage. Only segments without a translation are translated. Supports a glossary, additional instructions, tone and an optional document summary. Turn on **Include segment notes** to send each segment's notes, for example the message context (msgctxt) of PO files, to the model as context (off by default).
 - **Translate text** Translate text from one language to another. The source language is detected when it is not set.
 
 ### Editing
@@ -53,7 +53,7 @@ Before you can connect you need to make sure that:
 
 ### Review
 
-- **Review** Score each translated segment of a file from 0 to 1. Segments at or above the score threshold (default 0.8) are set to final.
+- **Review** Score each translated segment of a file from 0 to 1. Segments at or above the score threshold (default 0.8) are set to final. Turn on **Include segment notes** to send each segment's notes, for example the message context (msgctxt) of PO files, to the model as context (off by default).
 - **Review text** Score the quality of a translated text from 0 to 1.
 
 ### Shortening

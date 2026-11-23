@@ -80,7 +80,8 @@ public class ReviewActions(InvocationContext invocationContext, IFileManagementC
             Threshold = threshold,
             LowScoreThreshold = threshold,
             StateAboveThreshold = SegmentState.Final,
-            Summary = SummaryOptions.FromToggle(input.GenerateDocumentSummary)
+            Summary = SummaryOptions.FromToggle(input.GenerateDocumentSummary),
+            IncludeSegmentNotes = input.IncludeSegmentNotes ?? false
         }));
 
         var review = result.Content.Review!;
